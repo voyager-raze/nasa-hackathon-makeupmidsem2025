@@ -412,7 +412,7 @@ STYLE = """
   .pm-coord { font-family: Consolas, "Courier New", monospace; font-size: 0.92rem; }
   .pm-pin { background: transparent; border: 0; }
   .pm-pin span { display: block; width: 22px; height: 22px; line-height: 18px; text-align: center; border-radius: 50%; background: #1d4e89; color: white; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 0 0 1px #1d4e89; }
-  code { font-size: 0.84em; }
+  code { font-size: 0.84em; color: inherit; background: transparent; }
   @media (max-width: 860px) {
     html, body { height: auto; overflow: auto; }
     .pm-app { height: auto; grid-template-columns: 1fr; grid-template-rows: auto 62vh auto auto; }
