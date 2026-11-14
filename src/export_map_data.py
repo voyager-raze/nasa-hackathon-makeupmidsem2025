@@ -5,7 +5,7 @@ notes/features.md, and results/sites.json. Uses the same distance rules as
 src/score.py. Writes web/index.html only. Does not rank by editing
 results/top5.csv, and does not fill a blank measurement.
 
-The page is Leaflet plus the two Carto basemaps. It does not load Folium,
+The page is Leaflet plus the OpenFreeMap Positron and dark styles. It does not load Folium,
 Bootstrap, jQuery, glyphicons, Font Awesome, or Leaflet.awesome-markers.
 
 Weight changes are applied in the browser. Re-run this script only after the
@@ -40,7 +40,7 @@ PAGE_FEATURES = (
     {"key": "ndvi_median", "label": "Vegetation", "unit": "NDVI"},
     {"key": "precip_median_mm_hr", "label": "Dryness", "unit": "mm/hr"},
     {"key": "lst_night_median_k", "label": "Night cold", "unit": "K"},
-    {"key": "slope_median_deg", "label": "Slope", "unit": "degrees"},
+    {"key": "slope_median_deg", "label": "Slope", "unit": "°"},
 )
 # The five cells classed ice-sheet interior. The box is the cluster of cells
 # that outscored Kunlun and were classed the same way in notes/worldview-checks.md.
@@ -300,7 +300,10 @@ def page_html(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Partial Match</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 {STYLE}
 </head>
 <body>
@@ -347,7 +350,7 @@ def page_html(
         <p class="pm-coord">{html.escape(bodies["mars_center"])}</p>
         <p class="pm-quiet">Not a point on this Earth map. Case: ground ice.</p>
         <div id="pm-mars-rows"></div>
-        <p class="pm-minerals">Minerals: no data.</p>
+        <p class="pm-minerals">Minerals, ice map, and dust index: no data.</p>
       </article>
       <p class="pm-limit">Gravity, vacuum or thin air, and radiation are limits. They are not score terms.</p>
     </section>
@@ -455,10 +458,12 @@ STYLE = """
   .pm-block h3 { font-size: 13px; font-weight: 600; color: var(--muted); }
   .pm-place { font-weight: 600; margin-top: 4px; overflow-wrap: break-word; }
   .pm-earth-line, .pm-row { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.85fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .pm-row > div { min-width: 0; overflow-wrap: anywhere; }
   .pm-earth-line { grid-template-columns: minmax(0, 1fr) auto; }
   .pm-label { font-weight: 600; }
   .pm-colname { display: block; color: var(--muted); font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 400; }
   .pm-note, .pm-minerals, .pm-limit { color: var(--muted); font-size: 13px; margin-top: 8px; overflow-wrap: break-word; }
+  .pm-num { font-size: 12px; overflow-wrap: anywhere; }
   .pm-note { grid-column: 1 / -1; margin-top: 0; }
   .pm-limit { color: var(--ink); }
   .pm-stats { display: grid; gap: 8px; }
@@ -500,9 +505,9 @@ SCRIPT = r"""
 const META = __META__;
 const B64 = "__B64__";
 const NULL_I32 = -2147483648;
-const LIGHT = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-const DARK = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-const ATTRIB = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const LIGHT = "https://tiles.openfreemap.org/styles/positron";
+const DARK = "https://tiles.openfreemap.org/styles/dark";
+const ATTRIB = '<a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const TARGET = {
   ndvi_median: { moon: "none", mars: "none" },
   precip_median_mm_hr: { moon: "none", mars: "none" },
@@ -780,7 +785,9 @@ function renderDetail(i) {
   roleEl.textContent = role;
   if (!eligible[i]) {
     scoreEl.textContent = "Not ranked";
-    kindEl.textContent = "A used feature is blank on this cell.";
+    kindEl.textContent = activeFeatures(readWeights()).length
+      ? "A used feature is blank on this cell."
+      : "No measured feature has a positive weight.";
   } else {
     scoreEl.textContent = fmtScore(scores[i]);
     kindEl.textContent = weightsAreDefault() ? "June three-feature score" : "Score at these weights";
@@ -838,32 +845,32 @@ function renderList(weights) {
   if (!use.length) {
     list.innerHTML = "";
     status.textContent = "No measured feature has a positive weight. Nothing is ranked.";
-    return;
-  }
-  const shown = visibleDiscovery.slice(0, 5);
-  if (shown.some((i) => hold[i])) {
-    status.textContent = "A hold-out cell entered the discovery list.";
-  } else if (shown.some((i) => isRejected(i))) {
-    status.textContent = "A rejected ice-sheet cell entered the discovery list.";
-  } else if (weightsAreDefault()) {
-    status.textContent = "Closest cells outside the Atacama box and the Greenland ice-sheet cluster. " + visibleDiscovery.length + " cells remain.";
   } else {
-    const leader = visibleDiscovery.length ? cellId(visibleDiscovery[0]) : "none";
-    let text = "The order changed. Rank 1 on this list is " + leader + ". The Atacama box stays off the list.";
-    if (lastControl >= 0 && cellId(lastControl) !== META.site_b.cell_id) {
-      text += " Best cell inside the hold-out at these weights is " + cellId(lastControl) + ", score " + fmtScore(scores[lastControl]) + ". Site B stays the named control.";
+    const shown = visibleDiscovery.slice(0, 5);
+    if (shown.some((i) => hold[i])) {
+      status.textContent = "A hold-out cell entered the discovery list.";
+    } else if (shown.some((i) => isRejected(i))) {
+      status.textContent = "A rejected ice-sheet cell entered the discovery list.";
+    } else if (weightsAreDefault()) {
+      status.textContent = "Closest cells outside the Atacama box and the Greenland ice-sheet cluster. " + visibleDiscovery.length + " cells remain.";
+    } else {
+      const leader = visibleDiscovery.length ? cellId(visibleDiscovery[0]) : "none";
+      let text = "The order changed. Rank 1 on this list is " + leader + ". The Atacama box stays off the list.";
+      if (lastControl >= 0 && cellId(lastControl) !== META.site_b.cell_id) {
+        text += " Best cell inside the hold-out at these weights is " + cellId(lastControl) + ", score " + fmtScore(scores[lastControl]) + ". Site B stays the named control.";
+      }
+      status.textContent = text;
     }
-    status.textContent = text;
+    list.innerHTML = shown.map((i, rank) => (
+      "<li><button type=\"button\" data-i=\"" + i + "\" class=\"" + (i === selected ? "is-selected" : "") + "\">" +
+      "<span class=\"pm-rankn\">" + (rank + 1) + "</span>" +
+      "<span class=\"pm-id\">" + cellId(i) + "</span>" +
+      "<span class=\"pm-list-score\">" + fmtScore(scores[i]) + "</span></button></li>"
+    )).join("");
+    list.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => select(Number(button.getAttribute("data-i"))));
+    });
   }
-  list.innerHTML = shown.map((i, rank) => (
-    "<li><button type=\"button\" data-i=\"" + i + "\" class=\"" + (i === selected ? "is-selected" : "") + "\">" +
-    "<span class=\"pm-rankn\">" + (rank + 1) + "</span>" +
-    "<span class=\"pm-id\">" + cellId(i) + "</span>" +
-    "<span class=\"pm-list-score\">" + fmtScore(scores[i]) + "</span></button></li>"
-  )).join("");
-  list.querySelectorAll("button").forEach((button) => {
-    button.addEventListener("click", () => select(Number(button.getAttribute("data-i"))));
-  });
   const siteA = findCell(META.site_a.lat, META.site_a.lon);
   const siteB = findCell(META.site_b.lat, META.site_b.lon);
   const kind = weightsAreDefault() ? "June three-feature score" : "Score at these weights";
@@ -946,9 +953,14 @@ function scheduleRank() {
 
 function ensureMap() {
   if (map || typeof L === "undefined") return;
-  positron = L.tileLayer(LIGHT, { attribution: ATTRIB, subdomains: "abcd", maxZoom: 19 });
-  darkMatter = L.tileLayer(DARK, { attribution: ATTRIB, subdomains: "abcd", maxZoom: 19 });
-  map = L.map("pm-map", { minZoom: 2, zoomControl: true, worldCopyJump: true, scrollWheelZoom: true, touchZoom: true });
+  if (typeof maplibregl === "undefined" || typeof MaplibreGLLeaflet === "undefined") {
+    document.getElementById("pm-check").textContent = "The basemap libraries did not load. The scores below still use the embedded table.";
+    return;
+  }
+  positron = MaplibreGLLeaflet.maplibreGL({ style: LIGHT, attribution: ATTRIB });
+  darkMatter = MaplibreGLLeaflet.maplibreGL({ style: DARK, attribution: ATTRIB });
+  map = L.map("pm-map", { minZoom: 2, zoomControl: false, worldCopyJump: true, scrollWheelZoom: true, touchZoom: true });
+  L.control.zoom({ position: "topright" }).addTo(map);
   map.setView([18, 10], 2);
   positron.addTo(map);
   const box = META.holdout;
@@ -1336,8 +1348,8 @@ def main() -> None:
     found = [word for word in banned if word in lowered]
     if found:
         stop([f"Generated page still references {', '.join(found)}."])
-    if "leaflet" not in lowered or "cartocdn.com" not in lowered:
-        stop(["Generated page is missing Leaflet or the Carto basemap."])
+    if "leaflet" not in lowered or "tiles.openfreemap.org" not in lowered:
+        stop(["Generated page is missing Leaflet or the OpenFreeMap basemap."])
     if "filter: invert" in lowered or "hue-rotate" in lowered:
         stop(["Generated page still inverts the basemap."])
 
