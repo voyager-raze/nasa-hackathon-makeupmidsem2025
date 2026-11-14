@@ -1,0 +1,56 @@
+{
+  "method_version": "weight-sensitivity-v2",
+  "draws": 500,
+  "seed": 20261115,
+  "distribution": "Dirichlet(1) over 3 effective features",
+  "features": [
+    "ndvi_median",
+    "precip_median_mm_hr",
+    "lst_night_median_k"
+  ],
+  "rank1_cell": "35.3_81.1",
+  "vinchina_closer_count": 484,
+  "vinchina_closer_fraction": 0.968,
+  "rank1_top5_count": 59,
+  "rank1_top5_fraction": 0.118,
+  "prior_sensitivity": [
+    {
+      "prior": "Dirichlet(1,1,1)",
+      "alpha": 1.0,
+      "draws": 500,
+      "vinchina_closer_count": 484,
+      "vinchina_closer_fraction": 0.968,
+      "rank1_top5_count": 59,
+      "rank1_top5_fraction": 0.118
+    },
+    {
+      "prior": "Dirichlet(0.5,0.5,0.5)",
+      "alpha": 0.5,
+      "draws": 500,
+      "vinchina_closer_count": 443,
+      "vinchina_closer_fraction": 0.886,
+      "rank1_top5_count": 20,
+      "rank1_top5_fraction": 0.04
+    }
+  ],
+  "features_sha256": "265985d91c8f33d7e5dc1ff47374d313d684028401ce08549510045d5cb9b331",
+  "weights_sha256": "6e9c5f0f8b6081c27cb334c70578652ad684e5bf31b90b3e6a74161181e5b313",
+  "targets_sha256": "b6565f9f6564253dda0cc8ee0c760c2e72253431b14afa06e4e6ee44d2694f56",
+  "exclusion_source_sha256": "83b721d2e4318964a6fe416ed9a0c8bb3ae579a048e2a0f40466bd787b5c9668",
+  "method_sha256": "ba4630b888ab31d878229303a0d12baebd67772406914a74f501f01db00b59ce",
+  "ranking_exclusions": {
+    "atacama_holdout": {
+      "lat_min": -30.0,
+      "lat_max": -18.0,
+      "lon_min": -71.5,
+      "lon_max": -67.0
+    },
+    "greenland_cluster_bounds": {
+      "lat_min": 70.5,
+      "lat_max": 78.9,
+      "lon_min": -50.1,
+      "lon_max": -28.9,
+      "source": "notes/worldview-checks.md"
+    }
+  }
+}

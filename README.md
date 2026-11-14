@@ -4,6 +4,8 @@ Team Mid-Sem Make Up. Local event: Delhi, NASA Space Apps 2026. Challenge: Ident
 
 The score is a partial match on measured features, not a probability of mission success. A lower score is a closer partial match.
 
+This is a heuristic screening index: the three scored Earth features have no direct Moon or Mars referent in the cited source table. The target values are explicit proxies, not planetary measurements. June 2024 is one month, not a climate normal.
+
 The page a judge opens is [`web/index.html`](web/index.html). That page states the same score sentence. Double-click the file, or open it from the repository root on GitHub Pages.
 
 | Place | Site |
@@ -35,7 +37,7 @@ Five discovery cells were classed ice-sheet interior on 2024-06-15 and confirmed
 
 ## How to rerun
 
-On this machine, `python --version` reports **Python 3.13.9**. Install the packages named in [`requirements.txt`](requirements.txt): `pandas`, `numpy`, `rasterio`, and `folium`. That file does not pin versions.
+On the original build machine, `python --version` reported **Python 3.13.9**. Install the packages named in [`requirements.txt`](requirements.txt): `pandas`, `numpy`, `h5py`, `pyhdf`, `rasterio`, and `folium`. That file does not pin versions.
 
 The coarse rasters are not in git. `.gitignore` ignores `*.hdf`, `*.h5`, `*.hdf5`, `*.he5`, and `*.tif`. Filenames, versions, and URLs for the three June 2024 granules are in [`notes/data-log.md`](notes/data-log.md):
 

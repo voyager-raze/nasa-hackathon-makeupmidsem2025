@@ -4,6 +4,8 @@
 
 The score is a partial match on measured features, not a probability of mission success. A lower score is a closer partial match.
 
+The displayed index is heuristic: the three scored Earth features have no direct Moon or Mars referent in the source table. Target proxies and missing referents are named in the feature and score notes. The June 2024 values are one month, not a climate normal. The map discovery ranking excludes the Atacama hold-out and the source-backed Greenland ice-sheet cluster; it is a follow-up screen, not a claim that Kunlun is the best overall candidate. Its locked score is worse than Vinchina's control score.
+
 ## Open it
 
 Double-click `web/index.html`, or paste the file path into a browser. A local URL looks like `file:///D:/DTU/NasaHackathon/web/index.html`.
@@ -32,4 +34,4 @@ Moving a weight does not need that command. The page recomputes the order in the
 4. Open Adjust weights and move the `ndvi_median` weight from 1 to 3. Rank 1 becomes `35.3_81.3` at 0.112430, Site B becomes 0.105244, and the Atacama box stays off the discovery list. Reset weights to restore the values from `notes/weights.json`.
 5. Set the `ndvi_median` weight to 0. Cells with a blank NDVI can enter the list only if all remaining used features are measured; a blank is never shown as zero.
 
-The browser formula is the weighted mean in `results/score-notes.md`. At the default weights the page matches the batch top five and the control cell before the rejected Greenland ice-sheet cells are removed from the visible discovery list. Changing the slope weight is unavailable while that column is empty: the panel says no data, and there is no dead slider.
+The browser formula is the weighted mean in `results/score-notes.md`. At the default weights the page checks its embedded batch top five and control cell before the Greenland ice-sheet cluster is removed from the visible discovery list. Weight-draw counts are labeled as conditional weight sensitivity under a named prior; they are not confidence. Changing the slope weight is unavailable while that column is empty: the panel says no data, and there is no dead slider.

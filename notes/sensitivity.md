@@ -1,6 +1,6 @@
 # Sensitivity
 
-These figures are a rerun of the published formula on `data/processed/features.csv`. The rerun called `raw_distance` in `src/score.py`, read the weights from `notes/weights.json`, and used the 10th percentile of night temperature and the 95th percentile of each raw distance, which is the rule in `src/score.py`. It did not rewrite `results/top5.csv`, `results/control.csv`, `results/score-notes.md`, or `results/sources.csv`.
+These figures are a rerun of the published formula on `data/processed/features.csv`. The rerun called `raw_distance` in `src/score.py`, read the weights from `notes/weights.json`, and used the 10th percentile of night temperature and the 95th percentile of each raw distance, which is the rule in `src/score.py`. It did not rewrite the published scores in `results/top5.csv`, `results/control.csv`, or `results/score-notes.md`.
 
 The published scores stay 0.186845 at Kunlun and 0.167981 at Vinchina. The rerun returned 0.186845379 and 0.167981166. The differences are 0.000000379 and 0.000000166, both inside 0.000001. A lower score is a closer partial match. The score is a partial match on measured features, not a probability of mission success.
 
@@ -25,7 +25,7 @@ Changing the slope weight does not change the published ranking. The global slop
 
 ## Patch slopes, kept separate
 
-No global slope raster was built. The later patch measurements stay outside the published scores.
+No global slope raster was built; the attempted ETOPO2 archive download timed out as recorded in `notes/data-log.md`. The later patch measurements stay outside the published scores.
 
 | Patch | Median slope | Against 8.0–16.7 degrees |
 | --- | --- | --- |
@@ -33,3 +33,20 @@ No global slope raster was built. The later patch measurements stay outside the 
 | Vinchina, cell -27.9_-68.9 | 9.48 degrees, rounded from 9.476 | Inside the band |
 
 Those two degrees are the `slope_median_deg` rows in `results/sources.csv`. They are not part of 0.186845 or 0.167981.
+
+## Dirichlet weight draws
+
+`src/weight_stability.py` ran two sets of 500 deterministic draws using seed 20261115 on fixed June inputs. Each set sampled three weights and recomputed the weighted mean of the same three June distance columns and scales. The score still means a partial match on measured features, not a probability of mission success.
+
+| Question | Result |
+| --- | --- |
+| How often was Vinchina closer than Kunlun? | 484 of 500 draws (96.8%) |
+| How often did the displayed rank-1 cell, `35.3_81.1`, stay in the top five? | 59 of 500 draws (11.8%) |
+
+Under the symmetric Dirichlet(0.5, 0.5, 0.5) prior, Vinchina was closer in 443/500 draws (88.6%), and `35.3_81.1` stayed top five in 20/500 draws (4.0%). Conclusions vary with the chosen weight prior; these are conditional sensitivity results.
+
+The discovery ranking excludes the Atacama hold-out box and the reviewed Greenland ice-sheet cluster. The rank-1 reference is the displayed discovery rank, not the original `results/top5.csv` ordering, which includes Greenland cells. Slope remained null and was not sampled as a weight. These are conditional counts under assumed distributions over weights, not system confidence. They do not measure sensor error, seasonal variation, source bias, target uncertainty, truth, suitability, or mission-success probability. Exact counts, assumptions, exclusions, and input/method fingerprints are in `results/weight-stability.json`; the Dirichlet(1,1,1) fractions are also recorded in `results/sources.csv`.
+
+## Validation limits
+
+This analysis holds the June data, target proxies, and normalization scales fixed. It is weight sensitivity only; date/source sensitivity was not calculated because the July MOD13C2 request returned HTTP 401 and no alternate month was opened. No direct planetary referents or independent reference cases are available for external validation. The ranking has not been validated as a predictor of site suitability.

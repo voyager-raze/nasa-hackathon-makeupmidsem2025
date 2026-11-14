@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import base64
 import gzip
+import hashlib
 import html
 import json
 import re
@@ -31,16 +32,25 @@ sys.path.insert(0, str(ROOT / "src"))
 import score as scorer  # noqa: E402
 
 SITES_JSON = ROOT / "results" / "sites.json"
+STABILITY_JSON = ROOT / "results" / "weight-stability.json"
 OUT_HTML = ROOT / "web" / "index.html"
 
 NULL_I32 = np.int32(-2147483648)
-RECORD_BYTES = 16
-MEASURED_PACK = ("ndvi_median", "precip_median_mm_hr", "lst_night_median_k")
+RECORD_BYTES = 24
+MEASURED_PACK = (
+    "ndvi_median",
+    "precip_median_mm_hr",
+    "lst_night_median_k",
+    "lst_day_median_k",
+    "lst_day_night_range_median_k",
+)
 PAGE_FEATURES = (
     {"key": "ndvi_median", "label": "Vegetation", "unit": "NDVI"},
     {"key": "precip_median_mm_hr", "label": "Dryness", "unit": "mm/hr"},
     {"key": "lst_night_median_k", "label": "Night cold", "unit": "K"},
     {"key": "slope_median_deg", "label": "Slope", "unit": "°"},
+    {"key": "lst_day_median_k", "label": "Day temperature", "unit": "K"},
+    {"key": "lst_day_night_range_median_k", "label": "Day–night range", "unit": "K"},
 )
 # The five cells classed ice-sheet interior. The box is the cluster of cells
 # that outscored Kunlun and were classed the same way in notes/worldview-checks.md.
@@ -254,6 +264,54 @@ def check_site_scores(scored: pd.DataFrame, sites: dict) -> None:
         stop(problems)
 
 
+def read_stability(active: list[str]) -> dict | None:
+    if not STABILITY_JSON.is_file():
+        return None
+    try:
+        stability = json.loads(STABILITY_JSON.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        stop([f"{STABILITY_JSON.relative_to(ROOT)} is not valid JSON: {exc}"])
+    hashes = {
+        "features_sha256": hashlib.sha256(scorer.FEATURES_CSV.read_bytes()).hexdigest(),
+        "weights_sha256": hashlib.sha256(scorer.WEIGHTS_JSON.read_bytes()).hexdigest(),
+        "targets_sha256": hashlib.sha256(scorer.TARGETS_MD.read_bytes()).hexdigest(),
+        "exclusion_source_sha256": hashlib.sha256(
+            (ROOT / "notes" / "worldview-checks.md").read_bytes()
+        ).hexdigest(),
+    }
+    method_digest = hashlib.sha256()
+    for path in (ROOT / "src" / "score.py", ROOT / "src" / "export_map_data.py", ROOT / "src" / "weight_stability.py"):
+        method_digest.update(path.name.encode("utf-8"))
+        method_digest.update(path.read_bytes())
+    hashes["method_sha256"] = method_digest.hexdigest()
+    if any(stability.get(key) != value for key, value in hashes.items()):
+        stop(
+            [
+                f"{STABILITY_JSON.relative_to(ROOT)} is stale. "
+                "Rerun src/weight_stability.py before exporting the map."
+            ]
+        )
+    if stability.get("features") != active:
+        stop(
+            [
+                f"{STABILITY_JSON.relative_to(ROOT)} uses a different feature set. "
+                "Rerun src/weight_stability.py before exporting the map."
+            ]
+        )
+    draws = stability.get("draws")
+    counts = (
+        stability.get("vinchina_closer_count"),
+        stability.get("rank1_top5_count"),
+    )
+    if (
+        not isinstance(draws, int)
+        or draws <= 0
+        or any(not isinstance(value, int) or value < 0 or value > draws for value in counts)
+    ):
+        stop([f"{STABILITY_JSON.relative_to(ROOT)} has invalid draw counts."])
+    return stability
+
+
 def weight_controls(weights: dict[str, float], all_null: dict[str, bool]) -> str:
     blocks = []
     for spec in PAGE_FEATURES:
@@ -288,11 +346,23 @@ def page_html(
     sites: dict,
     weights: dict[str, float],
     all_null: dict[str, bool],
+    stability: dict | None,
 ) -> str:
     site_a = sites["site_a"]
     site_b = sites["site_b"]
     a_score = f"{float(site_a['score']):.6f}"
     b_score = f"{float(site_b['score']):.6f}"
+    stability_line = ""
+    if stability is not None:
+        draws = stability["draws"]
+        stability_line = (
+            f"<p class=\"pm-hint\">Conditional weight sensitivity under one assumed Dirichlet(1,1,1) prior on fixed June inputs: "
+            f"Vinchina was closer than Kunlun in "
+            f"{stability['vinchina_closer_count']} of {draws} draws; "
+            f"default-weight rank-1 cell {html.escape(stability['rank1_cell'])} "
+            f"stayed top five in "
+            f"{stability['rank1_top5_count']} of {draws} draws. These draws do not measure data error, source bias, target uncertainty, truth, suitability, or mission success.</p>"
+        )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -313,6 +383,7 @@ def page_html(
     <div class="pm-lead">
       <p class="pm-sentence">The score is a partial match on measured features, not a probability of mission success.</p>
       <p class="pm-quiet">A lower score is a closer partial match.</p>
+      <p class="pm-quiet">Heuristic index · no direct planetary referents · June 2024 only · no confidence estimate</p>
       <p id="pm-check">Reading the embedded table.</p>
     </div>
     <button type="button" id="pm-guide" class="pm-btn">Guide</button>
@@ -335,25 +406,25 @@ def page_html(
       <p id="pm-cell-coord" class="pm-coord"></p>
       <p id="pm-cell-role"></p>
       <p class="pm-scoreline"><span id="pm-live-score" class="pm-score">—</span> <span id="pm-score-kind">June three-feature score</span></p>
-      <p class="pm-quiet">June 2024 is one month, not a climate normal.</p>
       <div id="pm-earth"></div>
-      <article class="pm-block">
-        <h3>Moon</h3>
-        <p class="pm-place">{html.escape(bodies["moon_name"])}</p>
-        <p class="pm-coord">{html.escape(bodies["moon_center"])}</p>
-        <p class="pm-quiet">Not a point on this Earth map.</p>
-        <div id="pm-moon-rows"></div>
-      </article>
-      <article class="pm-block">
-        <h3>Mars</h3>
-        <p class="pm-place">{html.escape(bodies["mars_name"])}</p>
-        <p class="pm-coord">{html.escape(bodies["mars_center"])}</p>
-        <p class="pm-quiet">Not a point on this Earth map. Case: ground ice.</p>
-        <div id="pm-mars-rows"></div>
-        <p class="pm-minerals">Minerals, ice map, and dust index: no data.</p>
-      </article>
-      <p class="pm-limit">Gravity, vacuum or thin air, and radiation are limits. They are not score terms.</p>
+      <div class="pm-detail-grid">
+        <article class="pm-block pm-moon">
+          <div class="pm-target-heading"><h3>Moon target</h3><span class="pm-fixed">FIXED</span></div>
+          <p class="pm-place">{html.escape(bodies["moon_name"])}</p>
+          <p class="pm-coord">{html.escape(bodies["moon_center"])}</p>
+          <div id="pm-moon-rows"></div>
+        </article>
+        <article class="pm-block pm-mars">
+          <div class="pm-target-heading"><h3>Mars target · ground ice</h3><span class="pm-fixed">FIXED</span></div>
+          <p class="pm-place">{html.escape(bodies["mars_name"])}</p>
+          <p class="pm-coord">{html.escape(bodies["mars_center"])}</p>
+          <div id="pm-mars-rows"></div>
+          <p class="pm-minerals">Minerals, ice map, and dust index: no data.</p>
+        </article>
+      </div>
+      <p class="pm-limit"><strong>Physical limits:</strong> gravity, vacuum or thin air, and radiation. Not score terms.</p>
     </section>
+    <div class="pm-bottom">
     <div class="pm-stats">
       <button type="button" id="pm-jump-a" class="pm-card pm-stat pm-site-a">
         <span class="pm-kicker">Site A · {html.escape(site_a["country"])}</span>
@@ -376,12 +447,16 @@ def page_html(
       <h2>Discovery</h2>
       <p id="pm-status" class="pm-hint">Reading the embedded table.</p>
       <ol id="pm-ranks" class="pm-ranks"></ol>
+      {stability_line}
     </section>
+    </div>
     <details id="pm-weights" class="pm-card">
-      <summary>Adjust weights</summary>
-      <p class="pm-hint">Defaults from notes/weights.json. A change recomputes the order on this page. Scales stay fixed. A lower score is a closer partial match.</p>
-      {weight_controls(weights, all_null)}
-      <button type="button" id="pm-reset" class="pm-btn">Reset</button>
+      <summary>Customize score</summary>
+      <div class="pm-weight-panel">
+        <p class="pm-hint">Adjust measured-feature weights (0–5). Ranking updates live; normalization scales and target proxies stay fixed. This changes the heuristic, not its validation.</p>
+        {weight_controls(weights, all_null)}
+        <div class="pm-weight-actions"><span class="pm-hint">Default: equal weights on the three measured features.</span><button type="button" id="pm-reset" class="pm-btn">Reset defaults</button></div>
+      </div>
     </details>
   </aside>
 </div>
@@ -457,8 +532,9 @@ STYLE = """
   .pm-block { margin-top: 16px; }
   .pm-block h3 { font-size: 13px; font-weight: 600; color: var(--muted); }
   .pm-place { font-weight: 600; margin-top: 4px; overflow-wrap: break-word; }
-  .pm-earth-line, .pm-row { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.85fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .pm-earth-line, .pm-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; }
   .pm-row > div { min-width: 0; overflow-wrap: anywhere; }
+  .pm-row-feature { grid-column: 1 / -1; }
   .pm-earth-line { grid-template-columns: minmax(0, 1fr) auto; }
   .pm-label { font-weight: 600; }
   .pm-colname { display: block; color: var(--muted); font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-size: 11px; font-weight: 400; }
@@ -493,7 +569,7 @@ STYLE = """
     .pm-app { height: auto; display: block; }
     .pm-map-cell { height: 70vh; }
     .pm-side { border-left: 0; border-top: 1px solid var(--line); }
-    .pm-row, .pm-earth-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .pm-earth-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .pm-note { grid-column: 1 / -1; }
   }
 </style>
@@ -512,7 +588,9 @@ const TARGET = {
   ndvi_median: { moon: "none", mars: "none" },
   precip_median_mm_hr: { moon: "none", mars: "none" },
   lst_night_median_k: { moon: "none", mars: "none" },
-  slope_median_deg: { moon: "band", mars: "none" }
+  slope_median_deg: { moon: "band", mars: "none" },
+  lst_day_median_k: { moon: "none", mars: "none" },
+  lst_day_night_range_median_k: { moon: "none", mars: "none" }
 };
 
 function hexFloat(hex) {
@@ -627,7 +705,7 @@ function featureByKey(key) {
 }
 
 function activeFeatures(weights) {
-  return META.features.filter((feature) => !feature.all_null && weights[feature.key] > 0);
+  return META.features.filter((feature) => feature.scored && !feature.all_null && weights[feature.key] > 0);
 }
 
 function readWeights() {
@@ -641,8 +719,9 @@ function readWeights() {
 
 function weightsAreDefault() {
   return META.features.every((feature) => {
-    if (feature.all_null) return true;
+    if (!feature.scored || feature.all_null) return true;
     const input = document.getElementById("w-" + feature.key);
+    if (!input) return true;
     return Number(input.value) === Number(input.getAttribute("data-default"));
   });
 }
@@ -735,8 +814,8 @@ function rowHtml(feature, earth, which) {
   if (!waiting && which === "moon" && feature.key === "lst_night_median_k" && earth) {
     sentence = "Night temperature " + earth.text + " K has no Diviner value in the source table.";
   }
-  return "<div class=\"pm-row\"><div><div class=\"pm-label\">" + esc(feature.label) + "</div><div class=\"pm-colname\">" + esc(feature.key) + "</div></div>" +
-    "<div><div class=\"pm-kicker\">Earth</div><div class=\"pm-num\">" + esc(earthText) + "</div></div>" +
+  return "<div class=\"pm-row\"><div class=\"pm-row-feature\"><div class=\"pm-label\">" + esc(feature.label) + "</div><div class=\"pm-colname\">" + esc(feature.key) + "</div></div>" +
+  "<div><div class=\"pm-kicker\">Earth</div><div class=\"pm-num\">" + esc(earthText) + "</div></div>" +
     "<div><div class=\"pm-kicker\">Target</div><div class=\"pm-num\">" + esc(targetText(feature.key, which)) + "</div></div>" +
     "<div><div class=\"pm-kicker\">Status</div><div>" + esc(status) + "</div></div>" +
     (sentence ? "<p class=\"pm-note\">" + esc(sentence) + "</p>" : "") + "</div>";
@@ -1141,7 +1220,7 @@ async function start() {
   }
   const stream = new Blob([gzipBytes]).stream().pipeThrough(new DecompressionStream("gzip"));
   const raw = new Uint8Array(await new Response(stream).arrayBuffer());
-  if (raw.byteLength !== META.n * 16) {
+  if (raw.byteLength !== META.n * 24) {
     throw new Error("Embedded table length " + raw.byteLength + " does not match " + META.n + " cells.");
   }
   const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
@@ -1151,7 +1230,9 @@ async function start() {
   micros = {
     ndvi_median: new Int32Array(n),
     precip_median_mm_hr: new Int32Array(n),
-    lst_night_median_k: new Int32Array(n)
+    lst_night_median_k: new Int32Array(n),
+    lst_day_median_k: new Int32Array(n),
+    lst_day_night_range_median_k: new Int32Array(n)
   };
   norms = {
     ndvi_median: new Float64Array(n),
@@ -1160,12 +1241,14 @@ async function start() {
   };
   hold = new Uint8Array(n);
   for (let i = 0; i < n; i += 1) {
-    const offset = i * 16;
+    const offset = i * 24;
     lats[i] = view.getInt16(offset, true);
     lons[i] = view.getInt16(offset + 2, true);
     micros.ndvi_median[i] = view.getInt32(offset + 4, true);
     micros.precip_median_mm_hr[i] = view.getInt32(offset + 8, true);
     micros.lst_night_median_k[i] = view.getInt32(offset + 12, true);
+    micros.lst_day_median_k[i] = view.getInt32(offset + 16, true);
+    micros.lst_day_night_range_median_k[i] = view.getInt32(offset + 20, true);
     ["ndvi_median", "precip_median_mm_hr", "lst_night_median_k"].forEach((key) => {
       const micro = micros[key][i];
       norms[key][i] = micro === NULL_I32 ? NaN : rawDistance(key, micro / 1000000) / SCALES[key];
@@ -1209,7 +1292,13 @@ def main() -> None:
         if "latitude" not in center or "longitude" not in center:
             stop([f"{SITES_JSON.relative_to(ROOT)} {key} has no measured center."])
     frame = pd.read_csv(scorer.FEATURES_CSV)
-    required = ["lat_center_deg", "lon_center_deg", *scorer.FEATURE_ORDER]
+    required = [
+        "lat_center_deg",
+        "lon_center_deg",
+        *scorer.FEATURE_ORDER,
+        "lst_day_median_k",
+        "lst_day_night_range_median_k",
+    ]
     missing_columns = [name for name in required if name not in frame.columns]
     if missing_columns:
         stop([f"{scorer.FEATURES_CSV.relative_to(ROOT)} is missing columns: {', '.join(missing_columns)}."])
@@ -1217,7 +1306,7 @@ def main() -> None:
     if bool(duplicate):
         stop(["Two land cells share a center. The page was not written, because rank ties would be ambiguous."])
 
-    all_null = {name: bool(frame[name].isna().all()) for name in scorer.FEATURE_ORDER if name in weights}
+    all_null = {spec["key"]: bool(frame[spec["key"]].isna().all()) for spec in PAGE_FEATURES}
     active = [
         name
         for name in scorer.FEATURE_ORDER
@@ -1240,6 +1329,7 @@ def main() -> None:
     scored = score_frame(frame, weights, scales, float(cold_target), slope_band, active)
     top, control_row = check_against_batch(scored, active)
     check_site_scores(scored, sites)
+    stability = read_stability(active)
 
     lat_i = pack_tenths(frame["lat_center_deg"])
     lon_i = pack_tenths(frame["lon_center_deg"])
@@ -1252,7 +1342,9 @@ def main() -> None:
                 ("lon", "<i2"),
                 ("ndvi", "<i4"),
                 ("precip", "<i4"),
-                ("lst", "<i4"),
+                ("lst_night", "<i4"),
+                ("lst_day", "<i4"),
+                ("lst_day_night_range", "<i4"),
             ],
             align=False,
         ),
@@ -1263,7 +1355,9 @@ def main() -> None:
     record["lon"] = lon_i
     record["ndvi"] = packed_cols[0]
     record["precip"] = packed_cols[1]
-    record["lst"] = packed_cols[2]
+    record["lst_night"] = packed_cols[2]
+    record["lst_day"] = packed_cols[3]
+    record["lst_day_night_range"] = packed_cols[4]
     raw = record.tobytes()
     compressed = gzip.compress(raw, compresslevel=9, mtime=0)
     if gzip.decompress(compressed) != raw:
@@ -1287,7 +1381,7 @@ def main() -> None:
     meta = {
         "n": int(len(frame)),
         "cold_hex": float_hex(float(cold_target)),
-        "scales_hex": {name: float_hex(scales[name]) for name in MEASURED_PACK},
+        "scales_hex": {name: float_hex(scales[name]) for name in active},
         "slope_band": [slope_band[0], slope_band[1]],
         "holdout": {
             "lat_min": scorer.HOLDOUT_LAT_MIN,
@@ -1303,10 +1397,10 @@ def main() -> None:
                 "label": spec["label"],
                 "unit": spec["unit"],
                 "all_null": bool(all_null[spec["key"]]),
-                "weight": weights[spec["key"]],
+                "scored": spec["key"] in weights,
+                "weight": weights.get(spec["key"]),
             }
             for spec in PAGE_FEATURES
-            if spec["key"] in weights
         ],
         "expected_top": expected_top,
         "expected_control": {
@@ -1338,7 +1432,7 @@ def main() -> None:
         if int(found.sum()) != 1:
             stop([f"{key} cell {meta[key]['cell_id']} is not one row of the measurement table."])
 
-    page = page_html(bodies, sites, weights, all_null)
+    page = page_html(bodies, sites, weights, all_null, stability)
     script = SCRIPT.replace("__META__", json.dumps(meta, ensure_ascii=False)).replace("__B64__", b64)
     if "__B64__" in script or "__META__" in script:
         stop(["A page placeholder was left unfilled."])

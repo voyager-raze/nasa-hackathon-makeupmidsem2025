@@ -6,9 +6,9 @@ Reads only the June 2024 granules named in notes/data-log.md:
 - data/raw/MOD11C3.A2024153.061.2024187024328.hdf
 - data/raw/3B-MO.MS.MRG.3IMERG.20240601-S000000-E235959.06.V07B.HDF5
 
-Writes data/processed/features.csv and notes/features.md.
-Does not score, rank, or choose a site. Slope stays blank: the data log
-records that no elevation file was downloaded.
+Writes data/processed/features.csv and notes/features.md. Does not score,
+rank, or choose a site. Slope stays blank because no global elevation file
+was successfully downloaded.
 """
 
 from __future__ import annotations
@@ -114,24 +114,28 @@ def read_ndvi() -> tuple[np.ndarray, str]:
     return physical, scaled_as
 
 
-def read_lst_and_land() -> tuple[np.ndarray, np.ndarray, str]:
+def read_lst_and_land() -> tuple[np.ndarray, np.ndarray, np.ndarray, str, str]:
     hdf = SD(str(LST_FILE), SDC.READ)
     try:
+        day_raw, day_attrs = sds_array(hdf, "LST_Day_CMG")
         lst_raw, lst_attrs = sds_array(hdf, "LST_Night_CMG")
         land_raw, land_attrs = sds_array(hdf, "Percent_land_in_grid")
     finally:
         hdf.end()
-    if lst_raw.shape != (3600, 7200) or land_raw.shape != (3600, 7200):
+    if day_raw.shape != (3600, 7200) or lst_raw.shape != (3600, 7200) or land_raw.shape != (3600, 7200):
         raise SystemExit("LST or land-fraction shape is not the 0.05° CMG.")
-    lst, scaled_as = apply_modis_scale(lst_raw, lst_attrs, "lst")
-    finite = lst[np.isfinite(lst)]
-    if finite.size == 0 or not (150.0 <= float(np.median(finite)) <= 350.0):
-        raise SystemExit("Night LST scale check failed. Stopping without writing a table.")
+    day, day_scaled_as = apply_modis_scale(day_raw, day_attrs, "lst")
+    lst, night_scaled_as = apply_modis_scale(lst_raw, lst_attrs, "lst")
+    del day_raw, lst_raw
+    for label, values in (("Day", day), ("Night", lst)):
+        finite = values[np.isfinite(values)]
+        if finite.size == 0 or not (150.0 <= float(np.median(finite)) <= 350.0):
+            raise SystemExit(f"{label} LST scale check failed. Stopping without writing a table.")
 
     fill = int(land_attrs["_FillValue"])
     valid_min, valid_max = (int(v) for v in land_attrs["valid_range"])
     land = (land_raw != fill) & (land_raw >= valid_min) & (land_raw <= valid_max)
-    return lst, land, scaled_as
+    return day, lst, land, day_scaled_as, night_scaled_as
 
 
 def read_precip() -> tuple[np.ndarray, str]:
@@ -181,7 +185,8 @@ def write_notes(
     n_land: int,
     percents: list[tuple[str, float]],
     ndvi_scale_text: str,
-    lst_scale_text: str,
+    lst_day_scale_text: str,
+    lst_night_scale_text: str,
     precip_fill: str,
     ndvi_south_note: str,
 ) -> None:
@@ -234,8 +239,12 @@ Percent null (blank values among land cells):
 | `lon_center_deg` | degrees east | cell geometry of the logged CMG | center of the {CELL_DEG}° cell. Column 0 is the dateline at 180°W, increasing east. |
 | `ndvi_median` | NDVI (native index) | `{NDVI_FILE.relative_to(ROOT).as_posix()}` layer `CMG 0.05 Deg Monthly NDVI` | {ndvi_scale_text}. Then the median of the finite pixels in the cell. |
 | `ndvi_valid_count` | count of 0.05° pixels | same NDVI layer | pixels that are not `_FillValue` (−3000) and lie inside `valid_range` (−2000 to 10000). |
-| `lst_night_median_k` | kelvin | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `LST_Night_CMG` | {lst_scale_text}. Then the median of the finite pixels in the cell. This is the one temperature summary. `LST_Day_CMG` was not reduced into a second column. |
-| `lst_night_valid_count` | count of 0.05° pixels | same night LST layer | pixels that are not `_FillValue` (0) and lie inside `valid_range` (7500 to 65535). |
+| `lst_day_median_k` | kelvin | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `LST_Day_CMG` | {lst_day_scale_text}. Then the median of valid pixels in the cell. |
+| `lst_day_valid_count` | count of 0.05° pixels | same day LST layer | pixels that are not `_FillValue` and lie inside that layer’s `valid_range`. |
+| `lst_night_median_k` | kelvin | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `LST_Night_CMG` | {lst_night_scale_text}. Then the median of valid pixels in the cell. This remains the only temperature feature in the score. |
+| `lst_night_valid_count` | count of 0.05° pixels | same night LST layer | pixels that are not `_FillValue` and lie inside that layer’s `valid_range`. |
+| `lst_day_night_range_median_k` | kelvin | same file, layers `LST_Day_CMG` and `LST_Night_CMG` | Median of paired valid-pixel differences `day - night` within the cell. This is a descriptive measure, not a score term. |
+| `lst_day_night_range_valid_count` | count of paired 0.05° pixels | same day and night LST layers | Pixels valid in both layers; a missing day or night value stays missing. |
 | `precip_median_mm_hr` | mm/hr | `{PRECIP_FILE.relative_to(ROOT).as_posix()}` dataset `Grid/precipitation` | median of finite pixels. The file unit is mm/hr. `BinMethod=ARITHMETIC_MEAN` and `TimeInterval=MONTH`, so the stored value is already the June mean rate. It was not converted to a monthly millimetre total. This is the dryness measurement, left in the product unit. A lower rate is drier. |
 | `precip_valid_count` | count of 0.1° pixels | same precipitation dataset | pixels that are not the fill value ({precip_fill}). |
 | `land_pixel_count` | count of 0.05° pixels | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `Percent_land_in_grid` | pixels inside `valid_range` 1 to 100. This is the land test, not an analog feature. |
@@ -246,7 +255,7 @@ Percent null (blank values among land cells):
 
 When a valid count is even, the median is the arithmetic mean of the two central values (NumPy `nanmedian`). The same rule is used for every cell of a column.
 
-`land_pixel_count` is a coverage count. It is not vegetation, temperature, dryness, or slope, and it is not a score.
+`land_pixel_count` is a coverage count. It is not vegetation, temperature, dryness, or slope, and it is not a score. The day and day–night columns are descriptive; they have no target referent or weight in this run.
 
 ## What this table is not
 
@@ -261,18 +270,25 @@ def main() -> None:
         raise SystemExit("Cell size does not tile the MODIS grid.")
 
     ndvi, ndvi_scale_text = read_ndvi()
-    lst, land, lst_scale_text = read_lst_and_land()
+    lst_day, lst_night, land, lst_day_scale_text, lst_night_scale_text = read_lst_and_land()
     precip, precip_fill = read_precip()
 
     modis_factor = int(round(CELL_DEG / MODIS_DEG))
     imerg_factor = int(round(CELL_DEG / 0.1))
 
     ndvi_median, ndvi_count = block_median(ndvi, modis_factor)
-    lst_median, lst_count = block_median(lst, modis_factor)
+    lst_day_median, lst_day_count = block_median(lst_day, modis_factor)
+    lst_night_median, lst_night_count = block_median(lst_night, modis_factor)
+    paired = np.isfinite(lst_day) & np.isfinite(lst_night)
+    lst_day_night = np.full(lst_day.shape, np.nan, dtype=np.float64)
+    np.subtract(lst_day, lst_night, out=lst_day_night, where=paired)
+    del lst_day, lst_night
+    lst_day_night_median, lst_day_night_count = block_median(lst_day_night, modis_factor)
+    del lst_day_night
     land_count = (
         land.reshape(land.shape[0] // modis_factor, modis_factor, land.shape[1] // modis_factor, modis_factor)
         .transpose(0, 2, 1, 3)
-        .reshape(ndvi_median.shape[0], ndvi_median.shape[1], modis_factor * modis_factor)
+        .reshape(lst_night_median.shape[0], lst_night_median.shape[1], modis_factor * modis_factor)
         .sum(axis=2)
         .astype(np.int32)
     )
@@ -301,8 +317,12 @@ def main() -> None:
             "lon_center_deg": np.round(lon[keep], 1),
             "ndvi_median": ndvi_median[keep],
             "ndvi_valid_count": ndvi_count[keep],
-            "lst_night_median_k": lst_median[keep],
-            "lst_night_valid_count": lst_count[keep],
+            "lst_day_median_k": lst_day_median[keep],
+            "lst_day_valid_count": lst_day_count[keep],
+            "lst_night_median_k": lst_night_median[keep],
+            "lst_night_valid_count": lst_night_count[keep],
+            "lst_day_night_range_median_k": lst_day_night_median[keep],
+            "lst_day_night_range_valid_count": lst_day_night_count[keep],
             "precip_median_mm_hr": precip_median[keep],
             "precip_valid_count": precip_count[keep],
             "land_pixel_count": land_count[keep],
@@ -312,9 +332,12 @@ def main() -> None:
     )
     for column in (
         "ndvi_valid_count",
+        "lst_day_valid_count",
         "lst_night_valid_count",
+        "lst_day_night_range_valid_count",
         "precip_valid_count",
         "land_pixel_count",
+        "slope_valid_count",
     ):
         frame[column] = frame[column].astype("Int64")
 
@@ -323,8 +346,12 @@ def main() -> None:
         "lon_center_deg",
         "ndvi_median",
         "ndvi_valid_count",
+        "lst_day_median_k",
+        "lst_day_valid_count",
         "lst_night_median_k",
         "lst_night_valid_count",
+        "lst_day_night_range_median_k",
+        "lst_day_night_range_valid_count",
         "precip_median_mm_hr",
         "precip_valid_count",
         "land_pixel_count",
@@ -347,7 +374,8 @@ def main() -> None:
         n_land,
         percents,
         ndvi_scale_text,
-        lst_scale_text,
+        lst_day_scale_text,
+        lst_night_scale_text,
         precip_fill,
         ndvi_south_note,
     )

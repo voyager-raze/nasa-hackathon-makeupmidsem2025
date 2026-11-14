@@ -27,6 +27,10 @@ The score 0.186845 is the weighted distance of these three rows. No Moon or Mars
 | Vegetation | -0.01995 | NDVI | MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg CMG, 061, 1-30 June 2024 |
 | Dryness | 0.006 | mm/hr | GPM IMERG Final Precipitation L3 1 month 0.1 degree, 07 V07B, 1-30 June 2024 |
 | Night temperature | 258.8 | kelvin | MODIS/Terra Land Surface Temperature/Emissivity Monthly L3 Global 0.05Deg CMG, 061, 1-30 June 2024 |
+| Day temperature (descriptive; not scored) | 269.12 | kelvin | MODIS/Terra Land Surface Temperature/Emissivity Monthly L3 Global 0.05Deg CMG, 061, 1-30 June 2024 |
+| Paired day–night range (descriptive; not scored) | 11.05 | kelvin | Same MOD11C3 file; median of paired valid-pixel `day - night` values |
+
+Day temperature and paired range have no Moon or Mars referent in the source table.
 
 ### Breaks
 
@@ -73,6 +77,10 @@ The score 0.167981 is the weighted distance of these three rows. No Moon or Mars
 | Vegetation | 0.00925 | NDVI | MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg CMG, 061, 1-30 June 2024 |
 | Dryness | 0.008 | mm/hr | GPM IMERG Final Precipitation L3 1 month 0.1 degree, 07 V07B, 1-30 June 2024 |
 | Night temperature | 254.45 | kelvin | MODIS/Terra Land Surface Temperature/Emissivity Monthly L3 Global 0.05Deg CMG, 061, 1-30 June 2024 |
+| Day temperature (descriptive; not scored) | 264.58 | kelvin | MODIS/Terra Land Surface Temperature/Emissivity Monthly L3 Global 0.05Deg CMG, 061, 1-30 June 2024 |
+| Paired day–night range (descriptive; not scored) | 10.44 | kelvin | Same MOD11C3 file; median of paired valid-pixel `day - night` values |
+
+Day temperature and paired range have no Moon or Mars referent in the source table.
 
 ### Breaks
 
@@ -108,12 +116,16 @@ Ground ice, in this dossier, uses cold and barren ground. The Earth rows that sp
 | ndvi_median | -0.01995 | NDVI | 81.1 | 35.3 |
 | precip_median_mm_hr | 0.006 | mm/hr | 81.1 | 35.3 |
 | lst_night_median_k | 258.8 | kelvin | 81.1 | 35.3 |
+| lst_day_median_k | 269.12 | kelvin | 81.1 | 35.3 |
+| lst_day_night_range_median_k | 11.05 | kelvin | 81.1 | 35.3 |
 | slope_median_deg | 7.08 | degrees | 81.1 | 35.3 |
 | elevation_median | 6120.8 | m | 81.1 | 35.3 |
 | partial match score | 0.167981 | weighted distance | -68.9 | -27.9 |
 | ndvi_median | 0.00925 | NDVI | -68.9 | -27.9 |
 | precip_median_mm_hr | 0.008 | mm/hr | -68.9 | -27.9 |
 | lst_night_median_k | 254.45 | kelvin | -68.9 | -27.9 |
+| lst_day_median_k | 264.58 | kelvin | -68.9 | -27.9 |
+| lst_day_night_range_median_k | 10.44 | kelvin | -68.9 | -27.9 |
 | slope_median_deg | 9.48 | degrees | -68.9 | -27.9 |
 | elevation_median | 5330.7 | m | -68.9 | -27.9 |
 | lunar slope interquartile range | 8.0-16.7 | degrees | -137.4771 | -89.4632 |

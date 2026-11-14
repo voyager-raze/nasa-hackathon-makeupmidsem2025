@@ -159,6 +159,16 @@ def holdout_mask(frame: pd.DataFrame) -> pd.Series:
     ].between(HOLDOUT_LON_MIN, HOLDOUT_LON_MAX)
 
 
+def eligible_mask(frame: pd.DataFrame, active: list[str]) -> pd.Series:
+    """Require every positively weighted, measured feature to be present."""
+    if not active:
+        return pd.Series(False, index=frame.index, dtype=bool)
+    missing = [name for name in active if name not in frame.columns]
+    if missing:
+        stop([f"Eligibility check is missing columns: {', '.join(missing)}."])
+    return frame[active].notna().all(axis=1)
+
+
 def feature_list(names: list[str]) -> str:
     return ";".join(names) if names else "none"
 
@@ -297,6 +307,7 @@ def render_notes(
     return f"""# Score notes
 
 The score is a partial match on the measured features, not a probability of mission success.
+It is a heuristic screening index: none of the three scored features has a direct Moon or Mars referent in the cited source table. The Earth-side targets below are proxies, not planetary measurements.
 
 A lower score is a closer partial match. Gravity, vacuum, thin air, and radiation are not in this score.
 
@@ -377,6 +388,10 @@ The control score is the best eligible cell inside the box, from the same functi
 | features missing | slope_median_deg |
 
 The median score of the {n_eligible_control} eligible cells in the box is {control_median:.6f}. That median is a summary of the same cell scores. It is not a second formula. The row written to `results/control.csv` is the best cell.
+
+## Ranking meanings
+
+`results/top5.csv` is the unfiltered published batch ranking and contains the Greenland ice-sheet cluster. The map's discovery ranking excludes the Atacama hold-out and the Greenland cluster rectangle (70.5–78.9°N, 50.1–28.9°W), supported by the June/August 2024 Worldview checks in `notes/worldview-checks.md`; the five leading cells also have individual source rows in `results/sources.csv`. It answers which eligible cells remain for follow-up after those exclusions; it does not identify the best overall candidate. Kunlun's locked score is worse than the Vinchina control score. `results/control.csv` is the best eligible cell inside the Atacama box under the same formula.
 
 ## Discovery cells
 
@@ -471,10 +486,7 @@ def main() -> None:
         weighted = weighted + (weights[name] * norm[name] * present.astype(float))
     frame = frame.copy()
     frame["score"] = weighted / weight_sum.where(weight_sum > 0)
-    eligible = pd.Series(True, index=frame.index)
-    for name in active:
-        eligible = eligible & frame[name].notna()
-    frame["eligible"] = eligible
+    frame["eligible"] = eligible_mask(frame, active)
     frame["in_holdout"] = holdout_mask(frame)
 
     used = feature_list(active)

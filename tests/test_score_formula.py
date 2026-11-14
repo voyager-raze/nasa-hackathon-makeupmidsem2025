@@ -8,16 +8,20 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import pytest
 
 from src.score import (
     FEATURE_ORDER,
     TARGETS_MD,
     holdout_mask,
+    eligible_mask,
     load_weights,
     raw_distance,
     read_slope_band,
 )
+from src.build_features import apply_modis_scale, block_median
+from src.export_map_data import rejected_center
 
 ROOT = Path(__file__).resolve().parents[1]
 FEATURES = ROOT / "data" / "processed" / "features.csv"
@@ -136,3 +140,57 @@ def test_published_site_scores_match_the_feature_table():
     assert abs(float(score.loc[vinchina.index[0]]) - 0.167981) < 0.000001
     assert bool(holdout_mask(vinchina).iloc[0])
     assert not bool(holdout_mask(kunlun).iloc[0])
+
+
+def test_modis_scale_rejects_fill_and_out_of_range_before_scaling():
+    raw = pd.Series([-3000, -2001, -2000, 0, 10000, 10001], dtype="int16").to_numpy()
+    attrs = {"_FillValue": -3000, "valid_range": [-2000, 10000], "scale_factor": 10000, "units": "NDVI"}
+    physical, _ = apply_modis_scale(raw, attrs, "ndvi")
+    assert pd.isna(physical[0])
+    assert pd.isna(physical[1])
+    assert physical[2] == pytest.approx(-0.2)
+    assert physical[3] == 0.0
+    assert physical[4] == pytest.approx(1.0)
+    assert pd.isna(physical[5])
+
+
+def test_block_median_keeps_missing_values_missing_and_counts_only_finite_pixels():
+    values = np.array([[1.0, float("nan")], [3.0, 5.0]])
+    medians, counts = block_median(values, 2)
+    assert medians[0, 0] == pytest.approx(3.0)
+    assert counts[0, 0] == 3
+    all_missing, missing_counts = block_median(
+        np.full((2, 2), float("nan")), 2
+    )
+    assert pd.isna(all_missing[0, 0])
+    assert missing_counts[0, 0] == 0
+
+
+def test_eligibility_fails_closed_when_any_active_feature_is_missing():
+    frame = pd.DataFrame({"ndvi_median": [0.1, 0.2], "precip_median_mm_hr": [0.0, float("nan")]})
+    assert eligible_mask(frame, ["ndvi_median", "precip_median_mm_hr"]).tolist() == [True, False]
+    assert eligible_mask(frame, []).tolist() == [False, False]
+
+
+def test_greenland_cluster_exclusion_is_separate_from_atacama_holdout():
+    named_ice_cells = [(73.5, -40.5), (73.5, -40.7), (73.9, -40.1), (73.5, -40.9), (74.1, -39.9)]
+    for lat, lon in named_ice_cells:
+        assert rejected_center(lat, lon)
+    # The four edge checks and broad August context support the documented
+    # cluster box; a nearby cell outside it stays eligible for discovery.
+    assert rejected_center(74.0, -39.0)
+    assert not rejected_center(74.0, -28.7)
+    assert not rejected_center(-27.9, -68.9)
+    assert bool(holdout_mask(pd.DataFrame({"lat_center_deg": [-27.9], "lon_center_deg": [-68.9]})).iloc[0])
+
+
+def test_rank_ties_resolve_by_latitude_then_longitude():
+    tied = pd.DataFrame(
+        {"score": [0.2, 0.1, 0.1, 0.1], "lat_center_deg": [0.0, 1.0, -1.0, -1.0], "lon_center_deg": [0.0, 1.0, 2.0, -2.0]}
+    )
+    ranked = tied.sort_values(
+        ["score", "lat_center_deg", "lon_center_deg"],
+        ascending=[True, True, True],
+        kind="mergesort",
+    )
+    assert list(ranked.index) == [3, 2, 1, 0]

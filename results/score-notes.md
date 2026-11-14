@@ -1,6 +1,7 @@
 # Score notes
 
 The score is a partial match on the measured features, not a probability of mission success.
+It is a heuristic screening index: none of the three scored features has a direct Moon or Mars referent in the cited source table. The Earth-side targets below are proxies, not planetary measurements.
 
 A lower score is a closer partial match. Gravity, vacuum, thin air, and radiation are not in this score.
 
@@ -86,6 +87,10 @@ The control score is the best eligible cell inside the box, from the same functi
 | features missing | slope_median_deg |
 
 The median score of the 1114 eligible cells in the box is 0.273354. That median is a summary of the same cell scores. It is not a second formula. The row written to `results/control.csv` is the best cell.
+
+## Ranking meanings
+
+`results/top5.csv` is the unfiltered published batch ranking and contains the Greenland ice-sheet cluster. The map's discovery ranking excludes the Atacama hold-out and the Greenland cluster rectangle (70.5–78.9°N, 50.1–28.9°W), supported by the June/August 2024 Worldview checks in `notes/worldview-checks.md`; the five leading cells also have individual source rows in `results/sources.csv`. It answers which eligible cells remain for follow-up after those exclusions; it does not identify the best overall candidate. Kunlun's locked score is worse than the Vinchina control score. `results/control.csv` is the best eligible cell inside the Atacama box under the same formula.
 
 ## Discovery cells
 
