@@ -411,7 +411,9 @@ __WINNER_EXAMPLE__
 
 ## What this score is not
 
-The score is a partial match on the measured features, not a probability of mission success. Gravity, vacuum, thin air, and radiation stay out of scope. Slope stays out of the score until that column is measured.
+The score is a partial match on measured Earth proxies. It is not a probability of mission success. The dashboard reports success probability as not estimable and evidence confidence as low: the three scored features have no direct Moon/Mars referents, the feature snapshot covers one month, and there are no mission outcome cases for calibration. Gravity, vacuum, thin air, and radiation stay out of scope. Slope stays out of the score until that column is measured.
+
+To estimate mission success probability credibly, collect repeated seasonal measurements, direct target measurements for relevant hazards, and labeled outcomes from representative rover tasks. Define task success and failure before fitting a model; train and calibrate on held-out missions or trials; report calibration error and uncertainty intervals; and retain separate subsystem gates for power, thermal, communications, mobility, and crew safety. Until then, a numeric success probability would be fabricated.
 
 Rerun with `python src/score.py` after any edit to `notes/weights.json`.
 """

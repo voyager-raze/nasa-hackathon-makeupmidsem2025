@@ -37,7 +37,7 @@
   "weights_sha256": "6e9c5f0f8b6081c27cb334c70578652ad684e5bf31b90b3e6a74161181e5b313",
   "targets_sha256": "b6565f9f6564253dda0cc8ee0c760c2e72253431b14afa06e4e6ee44d2694f56",
   "exclusion_source_sha256": "83b721d2e4318964a6fe416ed9a0c8bb3ae579a048e2a0f40466bd787b5c9668",
-  "method_sha256": "418fd289f05cb49197aa998f42c6572ffb9b304cb7a9c75334c3ed28eebe4d02",
+  "method_sha256": "d901cfa954c35de5c40aab73428f38859d97aac0d10b8c6169a8818ec586bde8",
   "ranking_exclusions": {
     "atacama_holdout": {
       "lat_min": -30.0,

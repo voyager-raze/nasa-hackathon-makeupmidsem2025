@@ -1,12 +1,12 @@
-# Partial Match
+# Mission Analog Readiness
 
 Team Mid-Sem Make Up. Local event: Delhi, NASA Space Apps 2026. Challenge: Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars.
 
-The score is a partial match on measured features, not a probability of mission success. A lower score is a closer partial match.
+The score is a partial match on measured features, not a probability of mission success. A lower score is a closer partial match. The dashboard now shows a NASA Curiosity drive-completion reference rate with its Wilson interval, while making clear that this is not a candidate-site or whole-mission forecast. Candidate-specific success probability is not supported by the current one-month Earth proxy dataset.
 
 This is a heuristic screening index: the three scored Earth features have no direct Moon or Mars referent in the cited source table. The target values are explicit proxies, not planetary measurements. June 2024 is one month, not a climate normal.
 
-The page a judge opens is [`web/index.html`](web/index.html). That page states the same score sentence. Double-click the file, or open it from the repository root on GitHub Pages.
+The page a judge opens is [`web/index.html`](web/index.html). It keeps the map and selection details in the existing no-page-scroll desktop layout. Double-click the file, or open it from the repository root on GitHub Pages.
 
 | Place | Site |
 | --- | --- |

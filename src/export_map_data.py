@@ -19,6 +19,7 @@ import gzip
 import hashlib
 import html
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -52,13 +53,16 @@ COVERAGE_PACK = (
     ("lst_day_night_range_median_k", "lst_day_night_range_valid_count", 16),
 )
 PAGE_FEATURES = (
-    {"key": "ndvi_median", "label": "Vegetation", "unit": "NDVI"},
-    {"key": "precip_median_mm_hr", "label": "Dryness", "unit": "mm/hr"},
-    {"key": "lst_night_median_k", "label": "Night cold", "unit": "K"},
-    {"key": "slope_median_deg", "label": "Slope", "unit": "°"},
-    {"key": "lst_day_median_k", "label": "Day temperature", "unit": "K"},
-    {"key": "lst_day_night_range_median_k", "label": "Day–night range", "unit": "K"},
+    {"key": "ndvi_median", "label": "NDVI", "unit": "", "tooltip": "Vegetation index · scored"},
+    {"key": "precip_median_mm_hr", "label": "Rain", "unit": "mm/hr", "tooltip": "Precipitation · scored"},
+    {"key": "lst_night_median_k", "label": "Night LST", "unit": "K", "tooltip": "Night land-surface temperature · scored"},
+    {"key": "slope_median_deg", "label": "Slope", "unit": "°", "tooltip": "Terrain slope · later patch measurement, not scored"},
+    {"key": "lst_day_median_k", "label": "Day LST", "unit": "K", "tooltip": "Day land-surface temperature · context only"},
+    {"key": "lst_day_night_range_median_k", "label": "Day–night Δ", "unit": "K", "tooltip": "Day–night temperature range · context only"},
 )
+# Curiosity drive outcome counts reported in NASA NTRS 20220000780.
+REFERENCE_DRIVE_SUCCESSES = 622
+REFERENCE_DRIVE_ATTEMPTS = 738
 # The five cells classed ice-sheet interior. The box is the cluster of cells
 # that outscored Kunlun and were classed the same way in notes/worldview-checks.md.
 REJECTED_ICE = (
@@ -204,6 +208,17 @@ def score_frame(
 
 def formatted_score(value: float) -> str:
     return f"{float(value):.6f}"
+
+
+def wilson_interval(successes: int, total: int, z: float = 1.959963984540054) -> tuple[float, float]:
+    """95% Wilson interval for a binomial completion rate."""
+    if total <= 0 or not 0 <= successes <= total:
+        raise ValueError("Binomial counts must satisfy total > 0 and 0 <= successes <= total.")
+    rate = successes / total
+    denominator = 1.0 + z * z / total
+    center = (rate + z * z / (2.0 * total)) / denominator
+    margin = z * math.sqrt(rate * (1.0 - rate) / total + z * z / (4.0 * total * total)) / denominator
+    return center - margin, center + margin
 
 
 def check_against_batch(scored: pd.DataFrame, active: list[str]) -> tuple[pd.DataFrame, pd.Series]:
@@ -368,6 +383,12 @@ def page_html(
     site_b = sites["site_b"]
     a_score = f"{float(site_a['score']):.6f}"
     b_score = f"{float(site_b['score']):.6f}"
+    drive_rate = REFERENCE_DRIVE_SUCCESSES / REFERENCE_DRIVE_ATTEMPTS
+    drive_low, drive_high = wilson_interval(REFERENCE_DRIVE_SUCCESSES, REFERENCE_DRIVE_ATTEMPTS)
+    drive_reference = (
+        f"{drive_rate:.1%} ({REFERENCE_DRIVE_SUCCESSES}/{REFERENCE_DRIVE_ATTEMPTS}; "
+        f"95% Wilson interval {drive_low:.1%}–{drive_high:.1%})"
+    )
     stability_line = ""
     if stability is not None:
         draws = stability["draws"]
@@ -398,8 +419,8 @@ def page_html(
     <h1>Mission Analog Readiness</h1>
     <div class="pm-lead">
       <p class="pm-sentence">Evidence-based analog screening for rover rehearsal sites.</p>
-      <p class="pm-quiet">Mission success probability: <strong>not estimable</strong> from the available evidence.</p>
-      <p class="pm-quiet">June 2024 snapshot · 0/3 scored features have direct Moon or Mars referents · low evidence confidence</p>
+      <p class="pm-quiet">Site-specific mission probability is not supported by these Earth analog features.</p>
+      <p class="pm-quiet">June 2024 snapshot · 0/3 scored features have direct Moon or Mars referents · low evidence grade</p>
       <p id="pm-check">Reading the embedded table.</p>
     </div>
     <nav class="pm-links" aria-label="Evidence and method">
@@ -427,11 +448,12 @@ def page_html(
       <p id="pm-cell-coord" class="pm-coord"></p>
       <p id="pm-cell-role"></p>
       <p class="pm-scoreline"><span id="pm-live-score" class="pm-score">—</span> <span id="pm-score-kind">June three-feature score</span></p>
-      <p id="pm-probability" class="pm-probability">Mission success probability: <strong>NOT ESTIMABLE</strong></p>
-      <p id="pm-confidence" class="pm-confidence">Evidence confidence: <strong>LOW</strong> · one month, indirect proxies, no outcome validation</p>
-      <p class="pm-section-kicker">Earth measurements · June 2024</p>
+      <p id="pm-probability" class="pm-probability">Candidate mission success: <strong>NOT CALIBRATED</strong></p>
+      <p class="pm-baseline">Historical mobility reference: Curiosity drive completion <strong>{drive_reference}</strong>. This is a drive-level benchmark, not this site's mission forecast. <a href="https://ntrs.nasa.gov/citations/20220000780" target="_blank" rel="noreferrer">NASA record</a></p>
+      <p id="pm-confidence" class="pm-confidence">Evidence grade: <strong>LOW</strong> · one-month proxy data; no candidate outcome calibration</p>
+      <p class="pm-section-kicker">Earth measurements · Jun 2024 · scored inputs highlighted</p>
       <div id="pm-earth"></div>
-      <p class="pm-coverage-note">Pixel counts use product fill/range checks; MOD11 quality flags were not additional filters.</p>
+      <p class="pm-coverage-note">Valid pixel counts shown where available.</p>
       <p class="pm-target-lock-note">Moon and Mars targets remain fixed when you select another Earth cell.</p>
       <div class="pm-detail-grid">
         <article class="pm-block pm-moon">
@@ -439,7 +461,7 @@ def page_html(
           <p class="pm-place">{html.escape(bodies["moon_name"])}</p>
           <p class="pm-coord">{html.escape(bodies["moon_center"])}</p>
           <div class="pm-block-content">
-            <div class="pm-target-columns"><span>Feature</span><span>Planetary referent · Earth status</span></div>
+            <div class="pm-target-columns"><span>Feature</span><span>Target reference · Earth status</span></div>
             <div id="pm-moon-rows"></div>
           </div>
         </article>
@@ -448,7 +470,7 @@ def page_html(
           <p class="pm-place">{html.escape(bodies["mars_name"])}</p>
           <p class="pm-coord">{html.escape(bodies["mars_center"])}</p>
           <div class="pm-block-content">
-            <div class="pm-target-columns"><span>Feature</span><span>Planetary referent · Earth status</span></div>
+            <div class="pm-target-columns"><span>Feature</span><span>Target reference · Earth status</span></div>
             <div id="pm-mars-rows"></div>
             <p class="pm-minerals">Minerals, ice map, and dust index: no data.</p>
           </div>
@@ -560,6 +582,11 @@ STYLE = """
   .pm-scoreline { min-height: 32px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-top: 8px; }
   .pm-score, .pm-stat-score, .pm-num, .pm-coord, .pm-id { font-family: "Cascadia Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
   .pm-score, .pm-stat-score { color: var(--blue); font-weight: 600; font-size: 22px; }
+  .pm-probability, .pm-confidence { margin: 3px 0; color: var(--muted); font-size: 11px; line-height: 1.3; }
+  .pm-probability strong { color: var(--bad); letter-spacing: .04em; }
+  .pm-confidence strong { color: var(--amber); }
+  .pm-baseline { margin: 2px 0 5px; padding: 5px 7px; border-left: 2px solid var(--blue); background: var(--blue-soft); color: #344256; font-size: 10px; line-height: 1.25; }
+  .pm-baseline strong { color: var(--blue); }
   .pm-id { font-size: 14px; margin-top: 8px; overflow-wrap: anywhere; }
   .pm-coord { font-size: 13px; overflow-wrap: anywhere; }
   .pm-block { margin-top: 16px; }
@@ -631,13 +658,17 @@ STYLE = """
     .pm-section-kicker { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
     .pm-target-lock-note { color: var(--muted); font-size: 9px; line-height: 1.15; }
     .pm-weight-status { margin-top: 7px; padding: 7px 9px; border-radius: 7px; color: #174579; background: var(--blue-soft); font-size: 11px; }
-    #pm-earth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-    .pm-earth-line { display: block; min-width: 0; padding: 5px 6px; border: 1px solid var(--line); border-radius: 7px; background: #f8fafc; font-size: 10px; }
-    .pm-earth-line .pm-label { font-size: 10px; }
+    #pm-earth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+    .pm-earth-line { min-width: 0; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: #f8fafc; font-size: 9px; }
+    .pm-earth-line.is-scored { background: #f0f6ff; border-color: #d7e6f9; }
+    .pm-earth-head { display: flex; align-items: center; justify-content: space-between; gap: 3px; }
+    .pm-earth-line .pm-label { font-size: 9px; line-height: 1.1; }
+    .pm-measure-tag { color: var(--blue); font-size: 7px; font-weight: 700; letter-spacing: .04em; }
     .pm-earth-line .pm-colname { display: none; }
-    .pm-earth-line .pm-num { margin-top: 2px; font-size: 11px; }
-    .pm-coverage { display: block; margin-top: 2px; color: var(--muted); font-family: "Segoe UI", Arial, sans-serif; font-size: 9px; }
-    .pm-coverage-note { color: var(--muted); font-size: 9px; line-height: 1.15; }
+    .pm-earth-line .pm-num { margin-top: 1px; font-size: 10px; white-space: nowrap; }
+    .pm-coverage { display: inline; margin-left: 4px; color: var(--muted); font-family: "Segoe UI", Arial, sans-serif; font-size: 8px; }
+    .pm-coverage-note { display: none; }
+    .pm-baseline { margin: 1px 0 3px; padding: 4px 6px; font-size: 9px; }
     .pm-detail-grid { min-height: 0; flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
     .pm-block { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd; }
     .pm-target-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
@@ -951,7 +982,7 @@ function coverageText(key, i) {
 function targetText(key, which) {
   const kind = TARGET[key][which];
   if (kind === "band") return bandText() + " degrees";
-  if (kind === "none") return "No direct referent";
+  if (kind === "none") return "No comparable target value";
   return "no data";
 }
 
@@ -975,10 +1006,11 @@ function renderRows() {
   }
   earth.innerHTML = META.features.map((feature) => {
     const value = earthValue(feature.key, selected);
-    const shown = value ? value.text + " " + feature.unit : "no data";
-    const note = value && value.patch ? " Later patch, not in the June score." : "";
-    const support = coverageText(feature.key, selected);
-    return "<div class=\"pm-earth-line\"><div><div class=\"pm-label\">" + esc(feature.label) + "</div><div class=\"pm-colname\">" + esc(feature.key) + "</div></div><div class=\"pm-num\">" + esc(shown + note) + "<span class=\"pm-coverage\">" + esc(support) + "</span></div></div>";
+    const shown = value ? value.text + (feature.unit ? " " + feature.unit : "") : "no data";
+    const support = value && value.patch ? "patch" : coverageText(feature.key, selected).replace(" valid pixels", " px");
+    const scored = feature.scored && !feature.all_null;
+    const tag = scored ? "<span class=\"pm-measure-tag\">SCORE</span>" : "";
+    return "<div class=\"pm-earth-line " + (scored ? "is-scored" : "") + "\" title=\"" + esc(feature.tooltip || feature.label) + "\"><div class=\"pm-earth-head\"><span class=\"pm-label\">" + esc(feature.label) + "</span>" + tag + "</div><div class=\"pm-num\">" + esc(shown) + "<span class=\"pm-coverage\">" + esc(support) + "</span></div></div>";
   }).join("");
 }
 
@@ -995,7 +1027,7 @@ function renderDetail(i) {
     roleEl.textContent = "";
     scoreEl.textContent = "\u2014";
     kindEl.textContent = "June three-feature score";
-    confidenceEl.innerHTML = "Evidence confidence: <strong>LOW</strong> · no selected-cell data";
+    confidenceEl.innerHTML = "Evidence grade: <strong>LOW</strong> · no selected-cell data";
     renderRows();
     return;
   }
@@ -1008,7 +1040,7 @@ function renderDetail(i) {
   if (id === META.site_b.cell_id) role = "Site B. " + META.site_b.name + ". Atacama hold-out control.";
   roleEl.textContent = role;
   const present = ["ndvi_median", "precip_median_mm_hr", "lst_night_median_k"].filter((key) => earthValue(key, i) !== null).length;
-  confidenceEl.innerHTML = "Evidence confidence: <strong>LOW</strong> · " + present + "/3 Earth proxy measures present · 0/3 direct planetary referents";
+  confidenceEl.innerHTML = "Evidence grade: <strong>LOW</strong> · " + present + "/3 Earth proxy measures present · 0/3 direct planetary referents";
   if (!eligible[i]) {
     scoreEl.textContent = "Not ranked";
     kindEl.textContent = activeFeatures(readWeights()).length
@@ -1071,7 +1103,7 @@ function renderList(weights) {
   const weightStatus = document.getElementById("pm-weight-status");
   if (weightStatus) {
     weightStatus.textContent = use.length
-      ? use.length + " of " + META.features.filter((feature) => feature.scored && !feature.all_null).length + " available measured score terms active: " + use.map((feature) => feature.label).join(", ") + ". No confidence estimate."
+      ? use.length + " of " + META.features.filter((feature) => feature.scored && !feature.all_null).length + " measured score terms active: " + use.map((feature) => feature.label).join(", ") + ". Candidate success forecast is not calibrated."
       : "No measured score terms active. No cells are ranked.";
   }
   if (!use.length) {
@@ -1271,7 +1303,7 @@ function bindChrome() {
 
 function setupTour() {
   const steps = [
-    { sel: ".pm-sentence", title: "The score", body: "The score is a partial match on measured features, not a probability of mission success." },
+    { sel: ".pm-sentence", title: "Probability and reference", body: "The NASA Curiosity percentage is an observed drive-completion rate with a Wilson interval. It is not a site-specific mission forecast. Candidate-level mission probability requires a mission definition and calibration data." },
     { sel: ".pm-hud", title: "Move the map", body: "World, Rank 1, Site A, Site B, and Hold-out fly the map to that place." },
     { sel: "#pm-selected", title: "Compare a cell", body: "The Earth column changes with the cell, and the Moon and Mars targets stay fixed." },
     { sel: "#pm-ranks", title: "Discovery list", body: "These cells sit outside the Atacama box and outside the rejected Greenland ice sheet." },
@@ -1579,6 +1611,7 @@ def main() -> None:
                 "key": spec["key"],
                 "label": spec["label"],
                 "unit": spec["unit"],
+                "tooltip": spec["tooltip"],
                 "all_null": bool(all_null[spec["key"]]),
                 "scored": spec["key"] in weights,
                 "weight": weights.get(spec["key"]),

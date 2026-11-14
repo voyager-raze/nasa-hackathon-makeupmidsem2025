@@ -2,6 +2,16 @@
 
 This note uses the ideas in NASA-STD-7009 as a checklist: pedigree of the inputs, verification that the code follows the written formula, validation against a Moon or Mars referent where one exists, and an explicit uncertainty. This file does not claim that standard is met. Partial Match is not certified for flight. The page is an analog screen for a rover rehearsal on measured ground. The score is a partial match on measured features, not a probability of mission success.
 
+## Dashboard confidence and probability
+
+The page reports **no candidate-specific mission success probability**. The available site features are a single June 2024 Earth snapshot; vegetation, precipitation, and surface temperature have no direct Moon/Mars referents; and there are no mission outcomes linked to these candidate cells. A weighted similarity value cannot be converted to mission probability without inventing a relationship between similarity and outcome.
+
+To provide a useful numerical reference, the dashboard computes a historical Curiosity drive-completion rate from NASA's report: 622 of 738 attempted drives completed, or 84.3%. Its 95% Wilson interval is 81.5–86.7%, calculated from those counts. This is an observed **per-drive** rate over the first seven years of Curiosity, not a site-specific forecast or a whole-mission success probability. The interval treats attempts as binomial observations; drives from one rover over time are not fully independent, so this interval does not capture all operational or vehicle-specific uncertainty. Source: [NASA NTRS 20220000780](https://ntrs.nasa.gov/citations/20220000780).
+
+The displayed **LOW** evidence grade is qualitative; it is not a confidence interval or probability. It reflects one month of proxy data and no candidate outcome calibration. The selected-cell panel shows measured values and valid-pixel support, but pixel coverage is not confidence that a mission will succeed.
+
+A candidate-level model requires a specific rover, mission duration, task-success criterion, repeated seasonal and hazard-relevant site measurements, and representative rover-trial or mission outcome labels. Fit and calibrate on training cases, evaluate on held-out cases, publish calibration error and uncertainty intervals, and retain explicit gates for critical hazards such as mobility, power, thermal, communications, and crew safety.
+
 ## Pedigree
 
 Every published number below is a row in `results/sources.csv`, or it is named as a quantity computed from those rows. June 2024 is one month, not a climate normal. It is summer in the north and winter in the south.
