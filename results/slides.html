@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partial Match — seven slides</title>
+  <style>
+    :root {
+      --bg: #10141c;
+      --ink: #f6f3ec;
+      --muted: #c8c2b4;
+      --line: #3a3428;
+      --mark: #f0c27a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: "Segoe UI", Helvetica, Arial, sans-serif;
+      line-height: 1.25;
+    }
+    .deck { height: 100%; }
+    .slide {
+      display: none;
+      height: 100vh;
+      overflow: auto;
+      padding: 4.5vh 6vw 11vh;
+    }
+    .slide.active { display: block; }
+    h1 {
+      font-size: clamp(2.6rem, 6vw, 5rem);
+      line-height: 0.95;
+      margin: 0 0 0.3em;
+      letter-spacing: -0.03em;
+    }
+    h2 {
+      font-size: clamp(1.7rem, 3vw, 2.5rem);
+      margin: 0 0 0.4em;
+      color: var(--mark);
+      font-weight: 650;
+    }
+    p, li {
+      font-size: clamp(1.15rem, 1.9vw, 1.65rem);
+      margin: 0.4em 0;
+      max-width: 46rem;
+    }
+    .slide-1 p, .slide-2 p { font-size: clamp(1.7rem, 3.2vw, 2.7rem); max-width: 22em; }
+    .kicker {
+      font-size: clamp(1.1rem, 2vw, 1.5rem);
+      color: var(--muted);
+      margin-bottom: 0.4em;
+    }
+    table {
+      border-collapse: collapse;
+      width: min(100%, 52rem);
+      margin-top: 0.4em;
+      font-size: clamp(1.1rem, 1.8vw, 1.55rem);
+    }
+    th, td {
+      text-align: left;
+      padding: 0.45em 0.7em 0.45em 0;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+    th { color: var(--mark); font-weight: 650; }
+    a { color: var(--ink); }
+    .links p, .slide-4 p, .slide-7 p, .slide-6 p { font-size: clamp(1.02rem, 1.55vw, 1.32rem); max-width: 52rem; }
+    .links a { word-break: break-all; }
+    nav {
+      position: fixed;
+      right: 1.2rem;
+      bottom: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    button {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      width: 2.6rem;
+      height: 2.6rem;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+    @media print {
+      nav { display: none; }
+      .slide { display: flex !important; page-break-after: always; min-height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deck">
+    <section class="slide slide-1 active" id="s1">
+      <p class="kicker">Slide 1</p>
+      <h1>Partial Match</h1>
+      <p>Team Mid-Sem Make Up. Local event: Delhi, NASA Space Apps 2026.</p>
+      <p>Challenge: Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars.</p>
+    </section>
+
+    <section class="slide slide-2" id="s2">
+      <p class="kicker">Slide 2</p>
+      <h2>The problem</h2>
+      <p>A base site is chosen for specific traits.</p>
+      <p>A look-alike photo is not a result.</p>
+      <p>Earth can rehearse some of those traits.</p>
+    </section>
+
+    <section class="slide" id="s3">
+      <p class="kicker">Slide 3</p>
+      <h2>Our targets</h2>
+      <p>Moon: Shackleton–de Gerlache connecting ridge. Center 89.4632°S, 137.4771°W (222.5229°E).</p>
+      <p>The Moon trait is the ridge or rim operations analog: slope, barren ground, cold, and the nearby cold-trap limit.</p>
+      <p>Locked slope band 8.0-16.7 degrees, median 12.3 degrees, on the 16 km LOLA Site01 tile.</p>
+      <p>Mars: Arcadia Planitia, the terraced crater Badger, 46.581°N, 194.85°E. Locked case: ground ice. Those coordinates are the locked target. No Badger ice, mineral, or dust measurement is in the source table.</p>
+      <p>No second planetary target.</p>
+    </section>
+
+    <section class="slide slide-4" id="s4">
+      <p class="kicker">Slide 4</p>
+      <h2>Data and method</h2>
+      <p>NASA Earthdata Search, https://search.earthdata.nasa.gov/, supplied the June 2024 layers: MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg CMG, 061; MODIS/Terra Land Surface Temperature/Emissivity Monthly L3 Global 0.05Deg CMG, 061; and GPM IMERG Final Precipitation L3 1 month 0.1 degree, 07 V07B.</p>
+      <p>NASA Worldview, https://worldview.earthdata.nasa.gov/, supplied the surface classes. Patch slopes used Copernicus DEM, GLO-30 Public, 2021 release. The lunar slope used LOLA 5 m/pixel slope, Site01 connecting ridge.</p>
+      <p>Default weights: slope, vegetation, precipitation, and night temperature each have weight 1.0. A larger weight pulls the weighted distance toward that feature. A lower score is a closer partial match. Slope was null in the published scores, so those scores used vegetation, precipitation, and night temperature.</p>
+      <p>Missing data was left blank.</p>
+    </section>
+
+    <section class="slide" id="s5">
+      <p class="kicker">Slide 5</p>
+      <h2>What we found</h2>
+      <p>Site A is the Kunlun Mountains, Rutog County, Ngari Prefecture, Tibet Autonomous Region, China. 35.3°N, 81.1°E.</p>
+      <p>Site B is Vinchina, Departamento Vinchina, La Rioja, Argentina. 27.9°S, 68.9°W. Famous control: the best cell inside the Atacama hold-out, scored with the same weights.</p>
+      <p>Site B at 0.167981 is a closer partial match than Site A at 0.186845. Both scores used June 2024 vegetation, precipitation, and night temperature. Slope was null in both scores.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Measurement</th>
+            <th>Kunlun (Site A)</th>
+            <th>Vinchina (Site B)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vegetation</td>
+            <td>-0.01995 NDVI</td>
+            <td>0.00925 NDVI</td>
+          </tr>
+          <tr>
+            <td>Precipitation</td>
+            <td>0.006 mm/hr</td>
+            <td>0.008 mm/hr</td>
+          </tr>
+          <tr>
+            <td>Night land-surface temperature</td>
+            <td>258.8 kelvin</td>
+            <td>254.45 kelvin</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="slide slide-6" id="s6">
+      <p class="kicker">Slide 6</p>
+      <h2>Where the analogy breaks</h2>
+      <p>Gravity, vacuum or thin carbon-dioxide air, and radiation are limits. They are not rows in the source table.</p>
+      <p>Gravity on the Moon is about one-sixth of Earth. Gravity on Mars is about three-eighths of Earth. Both patches are full-Earth-gravity outdoor ground.</p>
+      <p>The Moon is a vacuum. Mars has thin carbon-dioxide air, roughly one percent of Earth’s surface pressure. Both patches have Earth’s air.</p>
+      <p>Air and the magnetic field block most radiation at Earth’s surface, so an outdoor test here does not qualify electronics or crews for the surface dose on the Moon or Mars.</p>
+      <p>The largest gap is an ice or permafrost map. None was opened. No Diviner temperature is in the source table. Kunlun’s median slope is 7.08 degrees, outside the locked band of 8.0-16.7 degrees. Vinchina’s median slope is 9.48 degrees, inside that band. Both slope rows were measured after the score.</p>
+      <p>The rehearsal is one rover drive on the measured median slope of 7.08 degrees, across the patch whose median NDVI is -0.01995, logging wheel current.</p>
+      <p>Vacuum, radiation, and suit tests stay in a lab.</p>
+    </section>
+
+    <section class="slide slide-7 links" id="s7">
+      <p class="kicker">Slide 7</p>
+      <h2>Limits and links</h2>
+      <p>Confidence is low. The largest missing dataset is an ice or permafrost map. None was opened.</p>
+      <p>The grid cell is 0.2° by 0.2°: 22.3 km north-south, and east-west 22.3 km times the cosine of latitude, about 22.3 km at the equator and about 11.1 km at 60° latitude.</p>
+      <p>The grid cannot see a boulder, a narrow rim, or a single drill site inside a 10 to 50 km cell.</p>
+      <p>Repository: REPO_URL_HERE</p>
+      <p>Data: https://search.earthdata.nasa.gov/ and https://worldview.earthdata.nasa.gov/</p>
+      <p>https://doi.org/10.5067/MODIS/MOD13C2.061</p>
+      <p>https://doi.org/10.5067/MODIS/MOD11C3.061</p>
+      <p>https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07</p>
+      <p>https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_slp.tif</p>
+      <p>https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/Copernicus_DSM_COG_10_N35_00_E081_00_DEM/Copernicus_DSM_COG_10_N35_00_E081_00_DEM.tif</p>
+      <p>https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/Copernicus_DSM_COG_10_S28_00_W069_00_DEM/Copernicus_DSM_COG_10_S28_00_W069_00_DEM.tif</p>
+    </section>
+  </div>
+  <nav>
+    <button type="button" id="prev" aria-label="Previous slide">←</button>
+    <span id="count">1 / 7</span>
+    <button type="button" id="next" aria-label="Next slide">→</button>
+  </nav>
+  <script>
+    const slides = Array.from(document.querySelectorAll(".slide"));
+    let i = 0;
+    const count = document.getElementById("count");
+    function show(n) {
+      i = (n + slides.length) % slides.length;
+      slides.forEach((s, idx) => s.classList.toggle("active", idx === i));
+      count.textContent = (i + 1) + " / " + slides.length;
+    }
+    document.getElementById("prev").addEventListener("click", () => show(i - 1));
+    document.getElementById("next").addEventListener("click", () => show(i + 1));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") show(i + 1);
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") show(i - 1);
+    });
+  </script>
+</body>
+</html>
