@@ -226,11 +226,11 @@ def build_map(holdout_name: str) -> tuple[str, str]:
             [scorer.HOLDOUT_LAT_MIN, scorer.HOLDOUT_LON_MIN],
             [scorer.HOLDOUT_LAT_MAX, scorer.HOLDOUT_LON_MAX],
         ],
-        color="#8a5a2b",
-        weight=2,
+        color="#e0a15a",
+        weight=1.5,
         fill=True,
-        fill_color="#c4a574",
-        fill_opacity=0.28,
+        fill_color="#e0a15a",
+        fill_opacity=0.14,
         tooltip=(
             f"{holdout_name} hold-out. Cells in this box are the famous control. "
             "They are scored with the same function and do not enter the discovery list."
@@ -249,18 +249,19 @@ def weight_controls(weights: dict[str, float], all_null: dict[str, bool]) -> str
         if all_null[name]:
             blocks.append(
                 f"""<label class="pm-weight is-disabled">
-                  <span class="pm-weight-name">{html.escape(name)} <span class="pm-unit">{html.escape(unit)}</span></span>
-                  <input id="w-{html.escape(name)}" type="range" min="0" max="5" step="0.1" value="{value:g}" disabled>
+                  <span class="pm-weight-name">{html.escape(name)}</span>
                   <span class="pm-weight-val">no data</span>
-                </label>
-                <p class="pm-hint">No data. The column is blank on every land cell, so this weight is not applied.</p>"""
+                  <span class="pm-unit">{html.escape(unit)} · blank on every land cell · not applied</span>
+                  <input id="w-{html.escape(name)}" type="range" min="0" max="5" step="0.1" value="{value:g}" disabled>
+                </label>"""
             )
             continue
         blocks.append(
             f"""<label class="pm-weight">
-              <span class="pm-weight-name">{html.escape(name)} <span class="pm-unit">{html.escape(unit)}</span></span>
+              <span class="pm-weight-name">{html.escape(name)}</span>
+              <input class="pm-num" id="wn-{html.escape(name)}" type="number" min="0" max="5" step="0.1" value="{value:g}" inputmode="decimal">
+              <span class="pm-unit">{html.escape(unit)}</span>
               <input id="w-{html.escape(name)}" type="range" min="0" max="5" step="0.1" value="{value:g}" data-default="{value:g}">
-              <span class="pm-weight-val" id="wv-{html.escape(name)}">{value:g}</span>
             </label>"""
         )
     return "\n".join(blocks)
@@ -282,79 +283,117 @@ def page_chrome(
     site_b = sites["site_b"]
     a_slope = site_a["features_used"]["slope_median_deg"]
     b_slope = site_b["features_used"]["slope_median_deg"]
-    formula = f"""
-        <ul>
-          <li><code>ndvi_median</code>, {html.escape(FEATURE_UNITS["ndvi_median"])}: absolute departure from 0. Scale {scorer.fmt(scales["ndvi_median"])}.</li>
-          <li><code>precip_median_mm_hr</code>, {html.escape(FEATURE_UNITS["precip_median_mm_hr"])}: rate above 0. Scale {scorer.fmt(scales["precip_median_mm_hr"])}.</li>
-          <li><code>lst_night_median_k</code>, {html.escape(FEATURE_UNITS["lst_night_median_k"])}: kelvin above the cold-tail target {scorer.fmt(cold_target)}. Scale {scorer.fmt(scales["lst_night_median_k"])}.</li>
-          <li><code>slope_median_deg</code>, degrees: degrees outside the locked band {low:.1f}–{high:.1f}, and 0 inside it. No data in the grid, so this term is not applied.</li>
-        </ul>
-    """
     return f"""
     <div class="pm-app">
       <header class="pm-banner">
-        <div>
+        <div class="pm-brand">
           <h1>Partial Match</h1>
-          <p class="pm-sentence">The score is a partial match on measured features, not a probability of mission success.</p>
         </div>
-        <p class="pm-meta">{n_cells} land cells embedded. A lower score is a closer partial match. Gravity, vacuum, thin air, and radiation are not in this score.</p>
+        <p class="pm-sentence">The score is a partial match on measured features, not a probability of mission success.</p>
+        <div class="pm-readout">
+          <p id="pm-check">Reading the embedded table.</p>
+          <button type="button" id="pm-guide" class="pm-btn">Guide</button>
+        </div>
       </header>
       <div class="pm-map-cell">
         <div class="folium-map" id="{map_name}"></div>
+        <p id="pm-cursor" class="pm-cursor">—</p>
+        <div class="pm-hud">
+          <button type="button" id="pm-go-world" class="pm-btn">World</button>
+          <button type="button" id="pm-go-rank" class="pm-btn">Rank 1</button>
+          <button type="button" id="pm-go-a" class="pm-btn">Site A</button>
+          <button type="button" id="pm-go-b" class="pm-btn">Site B</button>
+          <button type="button" id="pm-go-box" class="pm-btn">Hold-out</button>
+          <button type="button" id="pm-basemap" class="pm-btn">Dark map</button>
+        </div>
         <div class="pm-legend">
-          <div><i class="swatch rank"></i> Discovery rank</div>
+          <div><i class="swatch rank"></i> Discovery rank, top 5</div>
           <div><i class="swatch a"></i> Site A · {html.escape(site_a["name"])}</div>
-          <div><i class="swatch b"></i> Site B · {html.escape(site_b["name"])}, the control</div>
+          <div><i class="swatch b"></i> Site B · {html.escape(site_b["name"])}</div>
           <div><i class="swatch box"></i> Atacama hold-out</div>
-          <p>The score is a partial match on measured features, not a probability of mission success.</p>
         </div>
       </div>
       <aside class="pm-side">
-        <p id="pm-check" class="pm-check">Reading the embedded table.</p>
-        <section>
-          <h2>Weights</h2>
-          <p class="pm-hint">Defaults are the weights in <code>notes/weights.json</code>. Moving a weight recomputes the order in this browser. It does not rebuild the file.</p>
+        <section class="pm-stats" aria-label="Site scores">
+          <button type="button" id="pm-jump-a" class="pm-stat">
+            <span class="pm-kicker">Site A · {html.escape(site_a["country"])}</span>
+            <strong>{html.escape(site_a["name"])}</strong>
+            <span class="pm-coord">{html.escape(site_a["cell_id"])}</span>
+            <span id="pm-site-a-score" class="pm-stat-score">—</span>
+          </button>
+          <button type="button" id="pm-jump-b" class="pm-stat">
+            <span class="pm-kicker">Site B · control · {html.escape(site_b["country"])}</span>
+            <strong>{html.escape(site_b["name"])}</strong>
+            <span class="pm-coord">{html.escape(site_b["cell_id"])}</span>
+            <span id="pm-site-b-score" class="pm-stat-score">—</span>
+          </button>
+        </section>
+        <p class="pm-hint">Zoom slope {scorer.fmt(float(a_slope))}° at Site A and {scorer.fmt(float(b_slope))}° at Site B. Those are patch measurements, not the grid column, and the score leaves them out. <span id="pm-control-now"></span></p>
+        <section id="pm-weights">
+          <div class="pm-section-head">
+            <h2>Weights</h2>
+            <button type="button" id="pm-reset" class="pm-btn">Reset</button>
+          </div>
+          <p class="pm-hint">Defaults from <code>notes/weights.json</code>. A change recomputes the order here. It does not rebuild the file. Lower score is a closer partial match.</p>
           {weight_controls(weights, all_null)}
-          <button type="button" id="pm-reset" class="pm-btn">Reset weights</button>
         </section>
         <section>
-          <h2>Discovery list</h2>
-          <p id="pm-status" class="pm-hint">Cells outside the Atacama box. Site B stays on the control list.</p>
+          <div class="pm-section-head">
+            <h2>Discovery</h2>
+            <label class="pm-show">Show
+              <select id="pm-show">
+                <option value="5">5</option>
+                <option value="8" selected>8</option>
+                <option value="12">12</option>
+              </select>
+            </label>
+          </div>
+          <p id="pm-status" class="pm-hint">Cells outside the Atacama box.</p>
           <ol id="pm-ranks" class="pm-ranks"></ol>
         </section>
         <section>
           <h2>Selected cell</h2>
           <div id="pm-detail"></div>
         </section>
-        <section>
-          <h2>Sites</h2>
-          <p><strong>Site A · {html.escape(site_a["name"])}</strong>, {html.escape(site_a["country"])}. Cell <code>{html.escape(site_a["cell_id"])}</code>, {site_a["center"]["latitude"]:.1f}°, {site_a["center"]["longitude"]:.1f}°. <span id="pm-site-a-score"></span></p>
-          <p class="pm-hint">Local zoom slope {scorer.fmt(float(a_slope))} degrees is a patch measurement. It is not the grid column, and the score leaves it out.</p>
-          <p><strong>Site B · {html.escape(site_b["name"])}</strong>, {html.escape(site_b["country"])}. Cell <code>{html.escape(site_b["cell_id"])}</code>, {site_b["center"]["latitude"]:.1f}°, {site_b["center"]["longitude"]:.1f}°. The famous control, scored with the same function. <span id="pm-site-b-score"></span></p>
-          <p class="pm-hint">Local zoom slope {scorer.fmt(float(b_slope))} degrees is a patch measurement. It is not the grid column, and the score leaves it out. Cells in the Atacama box do not become the discovery winner.</p>
-          <p id="pm-control-now" class="pm-hint"></p>
-        </section>
-        <section>
-          <h2>How a score is made</h2>
-          <p>score = sum(weight × raw distance / scale) / sum(weight). The scale is the 95th percentile of that raw distance on land cells where the feature is measured, including the hold-out. The cold-tail target is the 10th percentile of night land-surface temperature. Those divisors stay fixed while a weight moves.</p>
-          {formula}
-          <p>A cell is ranked only when every feature with a positive weight and a measured column is present. A blank stays blank. It is not filled with zero, and the cell is not ranked on the features that remain.</p>
-        </section>
       </aside>
-      <section class="pm-bodies" aria-label="Moon and Mars targets">
+      <section class="pm-bodies" aria-label="Moon, Mars, and the score">
         <article class="pm-body">
-          <p class="pm-kicker">Moon</p>
+          <p class="pm-kicker">Moon · not on the Earth map</p>
           <h2>{html.escape(bodies["moon_name"])}</h2>
           <p class="pm-coord">{html.escape(bodies["moon_center"])}</p>
-          <p>These coordinates are on the Moon. They are not plotted on the Earth map.</p>
         </article>
         <article class="pm-body">
-          <p class="pm-kicker">Mars</p>
+          <p class="pm-kicker">Mars · not on the Earth map</p>
           <h2>{html.escape(bodies["mars_name"])}</h2>
           <p class="pm-coord">{html.escape(bodies["mars_center"])}</p>
-          <p>These coordinates are on Mars. They are not plotted on the Earth map. Minerals, an ice-map raster, and a dust index are blank in the target notes.</p>
+          <p class="pm-hint">Minerals, an ice-map raster, and a dust index are blank in the target notes.</p>
+        </article>
+        <article class="pm-body">
+          <p class="pm-kicker">Score</p>
+          <p>Mean of weight × distance / scale, using only measured features. Scales stay fixed while a weight moves.</p>
+          <p class="pm-coord">NDVI {scorer.fmt(scales["ndvi_median"])} · precip {scorer.fmt(scales["precip_median_mm_hr"])} mm/hr · night LST {scorer.fmt(scales["lst_night_median_k"])} K above {scorer.fmt(cold_target)} K</p>
+          <p class="pm-hint">Slope band {low:.1f}–{high:.1f}°. No grid slope, so that term is not applied. Gravity, vacuum, thin air, and radiation are not in this score. {n_cells} land cells are embedded.</p>
         </article>
       </section>
+    </div>
+    <div id="pm-tour" class="pm-tour" hidden>
+      <div id="pm-tour-top" class="pm-tour-shade"></div>
+      <div id="pm-tour-left" class="pm-tour-shade"></div>
+      <div id="pm-tour-right" class="pm-tour-shade"></div>
+      <div id="pm-tour-bottom" class="pm-tour-shade"></div>
+      <div id="pm-tour-ring" class="pm-tour-ring"></div>
+      <div id="pm-tour-card" class="pm-tour-card" role="dialog" aria-modal="true" aria-labelledby="pm-tour-title">
+        <p id="pm-tour-count" class="pm-kicker">1 of 5</p>
+        <h2 id="pm-tour-title">The score</h2>
+        <p id="pm-tour-body"></p>
+        <div class="pm-tour-actions">
+          <button type="button" id="pm-tour-skip" class="pm-btn">Skip</button>
+          <span class="pm-tour-nav">
+            <button type="button" id="pm-tour-back" class="pm-btn">Back</button>
+            <button type="button" id="pm-tour-next" class="pm-btn pm-btn-primary">Next</button>
+          </span>
+        </div>
+      </div>
     </div>
     """
 
@@ -362,63 +401,112 @@ def page_chrome(
 STYLE = """
 <title>Partial Match map</title>
 <style>
-  html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #f4f1ea; color: #1c1915; }
-  body { font-family: "Segoe UI", Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.4; }
-  .pm-app { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 390px; grid-template-rows: auto minmax(0, 1fr) auto; }
-  .pm-banner { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 16px; align-items: end; padding: 10px 14px 8px; background: #1c1915; color: #f4f1ea; }
-  .pm-banner h1 { margin: 0; font-size: 1.15rem; letter-spacing: 0.01em; }
-  .pm-sentence { margin: 2px 0 0; font-size: 0.98rem; }
-  .pm-meta { margin: 0; max-width: 34rem; font-size: 0.82rem; color: #d9d0c3; }
-  .pm-map-cell { position: relative; min-height: 0; }
+  :root {
+    --bg: #f4f6f8;
+    --card: #ffffff;
+    --line: #e4e8ee;
+    --ink: #1c2430;
+    --muted: #5e6a78;
+    --blue: #1d6fdb;
+    --blue-soft: #e8f1fc;
+    --green: #0f8a62;
+    --amber: #c47a12;
+    --bad: #b42318;
+  }
+  html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: var(--bg); color: var(--ink); }
+  body, button, input, select { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.45; }
+  button, input, select { color: inherit; }
+  h1, h2, p { margin: 0; }
+  code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 0.9em; color: inherit; background: transparent; }
+  .pm-app { height: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 400px; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--bg); }
+  .pm-banner { grid-column: 1 / -1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; column-gap: 24px; height: 64px; padding: 0 20px; box-sizing: border-box; overflow: hidden; background: var(--card); border-bottom: 1px solid var(--line); }
+  .pm-brand h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; white-space: nowrap; }
+  .pm-kicker { font-size: 12px; color: var(--muted); }
+  .pm-sentence { font-size: 15px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pm-readout { display: flex; align-items: center; gap: 12px; }
+  .pm-readout p { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .pm-check.is-bad { color: var(--bad); }
+  .pm-map-cell { position: relative; min-height: 0; background: #d7e2ea; }
   .pm-map-cell .folium-map { position: absolute !important; inset: 0; width: 100% !important; height: 100% !important; }
   .leaflet-container img, .leaflet-pane img { max-width: none !important; max-height: none !important; }
-  .pm-legend { position: absolute; z-index: 500; left: 10px; bottom: 18px; max-width: 280px; background: rgba(244, 241, 234, 0.94); border: 1px solid #cfc6b8; padding: 8px 10px; font-size: 0.82rem; }
-  .pm-legend p { margin: 6px 0 0; }
-  .pm-legend div { display: flex; gap: 6px; align-items: center; margin: 2px 0; }
-  .swatch { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
-  .swatch.rank { background: #1d4e89; }
-  .swatch.a { background: #0b6e4f; }
-  .swatch.b { background: #b45309; }
-  .swatch.box { background: #c4a574; border-radius: 2px; }
-  .pm-side { grid-column: 2; grid-row: 2 / span 2; overflow: auto; padding: 12px 14px 24px; background: #f7f4ee; border-left: 1px solid #ddd4c6; }
-  .pm-side h2 { margin: 16px 0 6px; font-size: 0.95rem; }
-  .pm-side section:first-of-type h2 { margin-top: 8px; }
-  .pm-hint, .pm-side p { margin: 0 0 8px; }
-  .pm-hint { color: #5c564c; font-size: 0.84rem; }
-  .pm-weight { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name val" "slider slider"; gap: 2px 8px; margin: 8px 0; }
-  .pm-weight-name { grid-area: name; font-family: Consolas, "Courier New", monospace; font-size: 0.78rem; }
-  .pm-unit { color: #5c564c; font-family: "Segoe UI", Helvetica, sans-serif; }
-  .pm-weight input { grid-area: slider; width: 100%; margin: 0; }
-  .pm-weight-val { grid-area: val; font-variant-numeric: tabular-nums; min-width: 3.2rem; text-align: right; }
-  .pm-weight.is-disabled { opacity: 0.72; }
-  .pm-btn { margin-top: 6px; background: #1c1915; color: #f4f1ea; border: 0; padding: 6px 10px; cursor: pointer; }
-  .pm-ranks { list-style: none; margin: 0; padding: 0; }
-  .pm-ranks button { width: 100%; text-align: left; background: white; border: 1px solid #e4dccf; border-bottom: 0; padding: 6px 8px; cursor: pointer; font: inherit; }
-  .pm-ranks li:last-child button { border-bottom: 1px solid #e4dccf; }
-  .pm-ranks button.is-selected { background: #e7f0e4; }
-  .pm-ranks .pm-id { font-family: Consolas, "Courier New", monospace; font-size: 0.84rem; }
-  .pm-score { float: right; font-variant-numeric: tabular-nums; }
-  .pm-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
-  .pm-table th, .pm-table td { border-bottom: 1px solid #e4dccf; padding: 4px 4px 4px 0; vertical-align: top; text-align: left; }
-  .pm-table td:nth-child(2) { min-width: 4.5rem; font-variant-numeric: tabular-nums; }
+  .leaflet-bar { border: 0 !important; box-shadow: 0 4px 16px rgba(28, 36, 48, 0.12) !important; border-radius: 10px !important; overflow: hidden; }
+  .leaflet-bar a, .leaflet-bar a:hover { background: #fff !important; color: var(--ink) !important; border-bottom-color: var(--line) !important; width: 32px; height: 32px; line-height: 32px; }
+  .pm-map-cell.is-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) saturate(0.25) brightness(0.92) contrast(1.05); }
+  .leaflet-control-attribution, .leaflet-control-scale-line { background: rgba(255, 255, 255, 0.9); color: var(--muted); }
+  .leaflet-control-attribution a { color: var(--blue); }
+  .pm-hud, .pm-legend, .pm-cursor { position: absolute; z-index: 500; }
+  .pm-cursor { top: 12px; left: 52px; width: 196px; height: 32px; margin: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0 12px; background: rgba(255, 255, 255, 0.96); border: 1px solid var(--line); border-radius: 999px; box-shadow: 0 4px 16px rgba(28, 36, 48, 0.08); font-family: "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; font-size: 13px; line-height: 1; color: var(--ink); pointer-events: none; }
+  .pm-hud { top: 12px; right: 12px; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; max-width: calc(100% - 260px); }
+  .pm-legend { left: 12px; bottom: 46px; display: grid; gap: 6px; padding: 10px 12px; background: rgba(255, 255, 255, 0.96); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(28, 36, 48, 0.08); font-size: 13px; }
+  .pm-legend div { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .swatch.rank { background: var(--blue); }
+  .swatch.a { background: var(--green); }
+  .swatch.b { background: var(--amber); }
+  .swatch.box { background: transparent; border: 1.5px solid var(--amber); border-radius: 2px; }
+  .pm-btn { background: #fff; color: var(--ink); border: 1px solid var(--line); padding: 6px 12px; font-size: 13px; cursor: pointer; border-radius: 999px; white-space: nowrap; box-shadow: 0 2px 8px rgba(28, 36, 48, 0.06); }
+  .pm-btn:hover { border-color: #b9d4f6; background: var(--blue-soft); color: var(--blue); }
+  .pm-side { grid-column: 2; grid-row: 2 / span 2; overflow: auto; padding: 16px 16px 28px; background: var(--bg); }
+  .pm-side h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+  .pm-section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 18px 0 8px; }
+  .pm-side section > h2 { margin: 18px 0 8px; }
+  .pm-hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+  .pm-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pm-stat { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer; display: grid; gap: 2px; box-shadow: 0 1px 2px rgba(28, 36, 48, 0.04); }
+  .pm-stat:hover { border-color: #b9d4f6; }
+  .pm-stat strong { font-size: 15px; font-weight: 650; }
+  .pm-stat-score { font-variant-numeric: tabular-nums; font-size: 18px; font-weight: 650; color: var(--blue); margin-top: 4px; }
+  .pm-weight { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "name val" "unit unit" "slider slider"; gap: 2px 8px; margin: 12px 0; padding: 10px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .pm-weight-name { grid-area: name; font-size: 13px; font-weight: 650; }
+  .pm-unit { grid-area: unit; color: var(--muted); font-size: 12.5px; }
+  .pm-weight input[type="range"] { grid-area: slider; width: 100%; margin: 4px 0 0; accent-color: var(--blue); }
+  .pm-num, .pm-weight-val { grid-area: val; width: 4.4rem; text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+  .pm-weight.is-disabled { background: #f8f5ef; }
+  .pm-weight.is-disabled .pm-weight-val { color: var(--amber); border-color: transparent; background: transparent; width: auto; font-weight: 650; }
+  .pm-show { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .pm-show select { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
+  .pm-ranks { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .pm-ranks button { width: 100%; display: grid; grid-template-columns: 1.6rem 1fr auto; gap: 8px; align-items: center; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+  .pm-ranks button:hover { border-color: #b9d4f6; }
+  .pm-ranks button.is-selected { background: var(--blue-soft); border-color: #b9d4f6; }
+  .pm-rankn { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pm-id, .pm-coord { font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; }
+  .pm-score { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--blue); }
+  .pm-table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .pm-table th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  .pm-table th, .pm-table td { border-bottom: 1px solid var(--line); padding: 8px 8px 8px 0; text-align: left; vertical-align: top; }
+  .pm-table th:first-child, .pm-table td:first-child { padding-left: 12px; }
+  .pm-table td:nth-child(n+2) { font-variant-numeric: tabular-nums; }
   .pm-blank { min-height: 1.1em; }
-  .pm-check { font-size: 0.84rem; padding: 6px 8px; background: #ece7dc; }
-  .pm-check.is-bad { background: #f3d6d0; }
-  .pm-bodies { grid-column: 1; grid-row: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px 10px; background: #ebe4d6; border-top: 1px solid #ddd4c6; }
-  .pm-body { background: white; border: 1px solid #ddd4c6; padding: 8px 10px; }
-  .pm-body h2 { margin: 0 0 4px; font-size: 1rem; }
-  .pm-body p { margin: 0 0 4px; font-size: 0.84rem; }
-  .pm-kicker { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.72rem; color: #5c564c; }
-  .pm-coord { font-family: Consolas, "Courier New", monospace; font-size: 0.92rem; }
+  .pm-role { margin-bottom: 8px; }
+  .pm-bodies { grid-column: 1; grid-row: 3; display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 10px; padding: 10px 12px; background: var(--bg); }
+  .pm-body { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .pm-body h2 { font-size: 15px; font-weight: 650; margin: 2px 0 4px; }
+  .pm-body p { font-size: 13px; }
   .pm-pin { background: transparent; border: 0; }
-  .pm-pin span { display: block; width: 22px; height: 22px; line-height: 18px; text-align: center; border-radius: 50%; background: #1d4e89; color: white; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 0 0 1px #1d4e89; }
-  code { font-size: 0.84em; color: inherit; background: transparent; }
-  @media (max-width: 860px) {
+  .pm-pin span { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: var(--blue); color: white; font-size: 12px; font-weight: 700; border: 2px solid white; box-shadow: 0 2px 8px rgba(28, 36, 48, 0.25); }
+  .pm-pin.site-a span { background: var(--green); }
+  .pm-pin.site-b span { background: var(--amber); }
+  .pm-readout .pm-btn { margin-bottom: 6px; }
+  .pm-btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); box-shadow: none; }
+  .pm-btn-primary:hover { background: #185fbe; color: #fff; border-color: #185fbe; }
+  .pm-tour[hidden] { display: none; }
+  .pm-tour-shade { position: fixed; background: rgba(22, 28, 36, 0.46); z-index: 2100; }
+  .pm-tour-ring { position: fixed; z-index: 2101; border: 2px solid var(--blue); border-radius: 14px; box-shadow: 0 0 0 4px rgba(29, 111, 219, 0.18); pointer-events: none; }
+  .pm-tour-card { position: fixed; z-index: 2102; width: min(380px, calc(100vw - 32px)); background: #fff; color: var(--ink); border-radius: 16px; padding: 18px 18px 14px; box-shadow: 0 18px 50px rgba(22, 28, 36, 0.22); }
+  .pm-tour-card h2 { font-size: 18px; margin: 4px 0 8px; }
+  .pm-tour-card p { font-size: 14.5px; }
+  .pm-tour-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 16px; }
+  .pm-tour-nav { display: flex; gap: 8px; }
+  @media (max-width: 980px) {
     html, body { height: auto; overflow: auto; }
-    .pm-app { height: auto; grid-template-columns: 1fr; grid-template-rows: auto 62vh auto auto; }
-    .pm-side { grid-column: 1; grid-row: 4; border-left: 0; border-top: 1px solid #ddd4c6; }
+    .pm-app { height: auto; grid-template-columns: 1fr; grid-template-rows: auto 68vh auto auto; }
+    .pm-banner { grid-template-columns: 1fr; row-gap: 6px; }
+    .pm-readout { text-align: left; }
+    .pm-hud { left: 12px; right: auto; justify-content: flex-start; }
+    .pm-side { grid-column: 1; grid-row: 4; }
     .pm-bodies { grid-column: 1; grid-row: 3; grid-template-columns: 1fr; }
-    .pm-banner { flex-direction: column; align-items: start; }
+    .pm-stats { grid-template-columns: 1fr; }
   }
 </style>
 """
@@ -491,9 +579,12 @@ let scores, eligible;
 let selected = -1;
 let pins = null;
 let map = null;
-let sawLeader = false;
 let lastLeader = -1;
+let lastDiscovery = [];
+let lastControl = -1;
+let lastWeights = null;
 let rankTimer = 0;
+let darkMap = false;
 
 function tenths(value) {
   return Math.round(value * 10);
@@ -539,9 +630,16 @@ function updateReadouts() {
   META.features.forEach((feature) => {
     if (feature.all_null) return;
     const input = document.getElementById("w-" + feature.key);
-    const label = document.getElementById("wv-" + feature.key);
-    if (input && label) label.textContent = String(Number(input.value));
+    const num = document.getElementById("wn-" + feature.key);
+    if (!input || !num || document.activeElement === num) return;
+    num.value = String(Number(input.value));
   });
+}
+
+function fmtRaw(value) {
+  if (!Number.isFinite(value)) return "";
+  const micro = Math.round(value * 1000000);
+  return formatMeasured(micro);
 }
 
 function better(i, j) {
@@ -590,42 +688,31 @@ function marker(lat, lon, options, text) {
   return point;
 }
 
-function drawMarkers(discovery, control) {
+function tagMarker(i, label, className, tip) {
+  const icon = L.divIcon({
+    className: "pm-pin " + className,
+    html: "<span>" + label + "</span>",
+    iconSize: [22, 22],
+    iconAnchor: [11, 11]
+  });
+  const point = L.marker([lats[i] / 10, lons[i] / 10], { icon: icon, zIndexOffset: className ? 700 : 500 });
+  point.bindTooltip(tip);
+  point.on("click", () => select(i));
+  point.addTo(pins);
+}
+
+function drawMarkers(discovery) {
   if (!map || typeof L === "undefined") return;
   if (!pins) pins = L.layerGroup().addTo(map);
   pins.clearLayers();
-  const leader = discovery.length ? discovery[0] : -1;
   discovery.slice(0, 5).forEach((i, rank) => {
-    const icon = L.divIcon({
-      className: "pm-pin",
-      html: "<span>" + (rank + 1) + "</span>",
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
-    const point = L.marker([lats[i] / 10, lons[i] / 10], { icon: icon, zIndexOffset: 500 });
-    point.bindTooltip("Discovery " + (rank + 1) + " · " + cellId(i) + " · " + fmtScore(scores[i]));
-    point.on("click", () => select(i));
-    point.addTo(pins);
+    tagMarker(i, String(rank + 1), "", "Discovery " + (rank + 1) + " · " + cellId(i) + " · " + fmtScore(scores[i]));
   });
   const siteA = findCell(META.site_a.lat, META.site_a.lon);
   const siteB = findCell(META.site_b.lat, META.site_b.lon);
-  if (siteA >= 0) {
-    marker(lats[siteA] / 10, lons[siteA] / 10, {
-      radius: 9, color: "#083d2c", weight: 2, fillColor: "#0b6e4f", fillOpacity: 0.95
-    }, "Site A · " + META.site_a.name).on("click", () => select(siteA)).addTo(pins);
-  }
-  if (siteB >= 0) {
-    marker(lats[siteB] / 10, lons[siteB] / 10, {
-      radius: 9, color: "#7c3b08", weight: 2, fillColor: "#b45309", fillOpacity: 0.95
-    }, "Site B · " + META.site_b.name + " · control").on("click", () => select(siteB)).addTo(pins);
-  }
-  if (leader >= 0 && sawLeader && leader !== lastLeader) {
-    map.flyTo([lats[leader] / 10, lons[leader] / 10], 4, { duration: 0.6 });
-  }
-  if (leader >= 0) {
-    sawLeader = true;
-    lastLeader = leader;
-  }
+  if (siteA >= 0) tagMarker(siteA, "A", "site-a", "Site A · " + META.site_a.name);
+  if (siteB >= 0) tagMarker(siteB, "B", "site-b", "Site B · " + META.site_b.name + " · control");
+  if (discovery.length) lastLeader = discovery[0];
   map.invalidateSize();
 }
 
@@ -639,7 +726,8 @@ function renderList(discovery, control, weights) {
     document.getElementById("pm-control-now").textContent = "";
     return;
   }
-  const shown = discovery.slice(0, 8);
+  const limit = Number(document.getElementById("pm-show").value) || 8;
+  const shown = discovery.slice(0, limit);
   const defaultIds = META.expected_top.map((row) => row.id).join(",");
   const nowIds = shown.slice(0, 5).map(cellId).join(",");
   const leaderWas = META.expected_top[0].id;
@@ -651,8 +739,9 @@ function renderList(discovery, control, weights) {
   status.textContent = orderNote + " " + discovery.length + " discovery cells. The Atacama box is excluded.";
   list.innerHTML = shown.map((i, rank) => (
     "<li><button type=\"button\" data-i=\"" + i + "\" class=\"" + (i === selected ? "is-selected" : "") + "\">" +
-    "<span class=\"pm-score\">" + fmtScore(scores[i]) + "</span>" +
-    "<span class=\"pm-id\">" + (rank + 1) + " · " + cellId(i) + "</span></button></li>"
+    "<span class=\"pm-rankn\">" + (rank + 1) + "</span>" +
+    "<span class=\"pm-id\">" + cellId(i) + "</span>" +
+    "<span class=\"pm-score\">" + fmtScore(scores[i]) + "</span></button></li>"
   )).join("");
   list.querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => select(Number(button.getAttribute("data-i"))));
@@ -673,9 +762,8 @@ function renderList(discovery, control, weights) {
 }
 
 function siteScoreText(i) {
-  if (i < 0) return "That cell is not in the embedded table.";
-  if (!eligible[i]) return "Not ranked at these weights, because a weighted feature is blank on the cell.";
-  return "Score at these weights: " + fmtScore(scores[i]) + ".";
+  if (i < 0 || !eligible[i]) return "—";
+  return fmtScore(scores[i]);
 }
 
 function renderDetail(i) {
@@ -684,6 +772,7 @@ function renderDetail(i) {
     root.textContent = "Select a cell.";
     return;
   }
+  const weights = readWeights();
   const nulls = [];
   const rows = META.features.map((feature) => {
     let micro = NULL_I32;
@@ -691,11 +780,20 @@ function renderDetail(i) {
     const blank = micro === NULL_I32;
     if (blank) nulls.push(feature.key);
     const shown = blank ? "" : formatMeasured(micro);
+    let distance = "";
+    let term = "";
     let state = "in the score";
     if (feature.all_null) state = "no data";
     else if (blank) state = "blank on this cell";
-    else if (readWeights()[feature.key] <= 0) state = "weight is 0";
-    return "<tr><td><code>" + esc(feature.key) + "</code></td><td class=\"" + (blank ? "pm-blank" : "") + "\">" + esc(shown) + "</td><td>" + state + "</td></tr>";
+    else {
+      const raw = rawDistance(feature.key, micro / 1000000);
+      distance = fmtRaw(raw);
+      if (weights[feature.key] <= 0) state = "weight is 0";
+      else term = (weights[feature.key] * raw / SCALES[feature.key]).toFixed(4);
+    }
+    const cell = (value) => "<td class=\"" + (value === "" ? "pm-blank" : "") + "\"" + (value === "" ? " title=\"blank\"" : "") + ">" + esc(value) + "</td>";
+    return "<tr><td><code>" + esc(feature.key) + "</code><div class=\"pm-hint\">" + esc(feature.unit) + "</div></td>" +
+      cell(shown) + cell(distance) + cell(term) + "<td>" + state + "</td></tr>";
   }).join("");
   let role = "Discovery cell";
   if (hold[i]) role = "Inside the Atacama hold-out. Scored as a control cell, not a discovery winner.";
@@ -707,18 +805,22 @@ function renderDetail(i) {
   root.innerHTML =
     "<p><strong>" + esc(cellId(i)) + "</strong> · " + (lats[i] / 10).toFixed(1) + "°, " + (lons[i] / 10).toFixed(1) + "°</p>" +
     "<p>" + esc(role) + " " + esc(scoreLine) + "</p>" +
-    "<table class=\"pm-table\"><thead><tr><th>Feature</th><th>Measurement</th><th></th></tr></thead><tbody>" +
+    "<table class=\"pm-table\"><thead><tr><th>Feature</th><th>Measurement</th><th>Distance</th><th>Term</th><th></th></tr></thead><tbody>" +
     rows + "</tbody></table>" +
-    "<p class=\"pm-hint\">Null on this cell: " + (nulls.length ? nulls.map(esc).join(", ") : "none") + ". A blank measurement is left blank.</p>";
+    "<p class=\"pm-hint\">Null on this cell: " + (nulls.length ? nulls.map(esc).join(", ") : "none") + ". A blank measurement is left blank. A term is weight × distance / scale.</p>";
 }
 
-function select(i) {
+function select(i, zoom) {
   selected = i;
   renderDetail(i);
   document.querySelectorAll(".pm-ranks button").forEach((button) => {
     button.classList.toggle("is-selected", Number(button.getAttribute("data-i")) === i);
   });
-  if (map) map.panTo([lats[i] / 10, lons[i] / 10]);
+  if (!map) return;
+  const lat = lats[i] / 10;
+  const lon = lons[i] / 10;
+  if (zoom) map.flyTo([lat, lon], zoom, { duration: 0.45 });
+  else map.panTo([lat, lon]);
 }
 
 function checkDefault(discovery, control) {
@@ -741,16 +843,19 @@ function checkDefault(discovery, control) {
     return;
   }
   note.className = "pm-check";
-  note.textContent = "Default order matches the batch score. Rank 1 is " + META.expected_top[0].id + ". Moving a weight does not rebuild this file.";
+  note.textContent = "Batch order · rank 1 " + META.expected_top[0].id;
 }
 
 function rerank() {
   const weights = readWeights();
   const ranked = rankCells(weights);
   if (selected < 0 && ranked.discovery.length) selected = ranked.discovery[0];
+  lastDiscovery = ranked.discovery;
+  lastControl = ranked.control;
+  lastWeights = weights;
   renderList(ranked.discovery, ranked.control, weights);
   renderDetail(selected);
-  drawMarkers(ranked.discovery, ranked.control);
+  drawMarkers(ranked.discovery);
   const defaults = META.features.every((feature) => {
     if (feature.all_null) return true;
     const input = document.getElementById("w-" + feature.key);
@@ -760,7 +865,7 @@ function rerank() {
   else {
     const note = document.getElementById("pm-check");
     note.className = "pm-check";
-    note.textContent = "Weights differ from notes/weights.json. The list was recomputed in the browser. Reset restores the batch order.";
+    note.textContent = "Weights changed · order recomputed in the browser";
   }
 }
 
@@ -813,19 +918,171 @@ async function start() {
     const input = document.getElementById("w-" + feature.key);
     if (!input || input.disabled) return;
     input.addEventListener("input", scheduleRank);
+    const num = document.getElementById("wn-" + feature.key);
+    if (!num) return;
+    num.addEventListener("change", () => {
+      let value = Number(num.value);
+      if (!Number.isFinite(value)) value = Number(input.getAttribute("data-default"));
+      value = Math.min(5, Math.max(0, Math.round(value * 10) / 10));
+      num.value = String(value);
+      input.value = String(value);
+      scheduleRank();
+    });
+  });
+  document.getElementById("pm-show").addEventListener("change", () => {
+    if (lastWeights) renderList(lastDiscovery, lastControl, lastWeights);
   });
   document.getElementById("pm-reset").addEventListener("click", () => {
     META.features.forEach((feature) => {
       if (feature.all_null) return;
       const input = document.getElementById("w-" + feature.key);
       input.value = input.getAttribute("data-default");
+      const num = document.getElementById("wn-" + feature.key);
+      if (num) num.value = input.getAttribute("data-default");
     });
-    sawLeader = false;
-    lastLeader = -1;
     if (map) map.setView([18, 10], 2);
     scheduleRank();
   });
+  const siteA = () => findCell(META.site_a.lat, META.site_a.lon);
+  const siteB = () => findCell(META.site_b.lat, META.site_b.lon);
+  document.getElementById("pm-go-world").addEventListener("click", () => map && map.setView([18, 10], 2));
+  document.getElementById("pm-go-rank").addEventListener("click", () => { if (lastLeader >= 0) select(lastLeader, 4); });
+  document.getElementById("pm-go-a").addEventListener("click", () => { const i = siteA(); if (i >= 0) select(i, 5); });
+  document.getElementById("pm-go-b").addEventListener("click", () => { const i = siteB(); if (i >= 0) select(i, 5); });
+  document.getElementById("pm-jump-a").addEventListener("click", () => { const i = siteA(); if (i >= 0) select(i, 5); });
+  document.getElementById("pm-jump-b").addEventListener("click", () => { const i = siteB(); if (i >= 0) select(i, 5); });
+  document.getElementById("pm-go-box").addEventListener("click", () => {
+    if (!map) return;
+    const box = META.holdout;
+    map.flyTo([(box.lat_min + box.lat_max) / 2, (box.lon_min + box.lon_max) / 2], 5, { duration: 0.45 });
+  });
+  document.getElementById("pm-basemap").addEventListener("click", () => {
+    darkMap = !darkMap;
+    document.querySelector(".pm-map-cell").classList.toggle("is-dark", darkMap);
+    document.getElementById("pm-basemap").textContent = darkMap ? "Light map" : "Dark map";
+  });
+  if (map) {
+    map.on("mousemove", (event) => {
+      document.getElementById("pm-cursor").textContent =
+        event.latlng.lat.toFixed(3) + "°, " + event.latlng.lng.toFixed(3) + "°";
+    });
+    map.on("mouseout", () => { document.getElementById("pm-cursor").textContent = "—"; });
+  }
   rerank();
+  setupTour();
+}
+
+function setupTour() {
+  const steps = [
+    {
+      sel: ".pm-sentence",
+      title: "The score",
+      body: "This is a partial match on measured features. It is not a probability of mission success. A lower score is a closer match."
+    },
+    {
+      sel: ".pm-legend",
+      title: "What is on the map",
+      body: "Blue numbers are the top discovery cells. Green A is Site A. Amber B is Site B, the control. The box is the Atacama hold-out. Those cells are scored the same way and do not become the discovery winner. The buttons above move the view."
+    },
+    {
+      sel: "#pm-weights",
+      title: "Change a weight",
+      body: "Move a slider, or type a number from 0 to 5. The list updates in this page. You do not rebuild the file. Slope says no data, so that control stays off and is not used."
+    },
+    {
+      sel: "#pm-ranks",
+      title: "Open a cell",
+      body: "Click a row. The table below shows the measurement, the distance, and the term. A blank stays blank. A measured zero stays zero."
+    },
+    {
+      sel: ".pm-bodies",
+      title: "Moon and Mars",
+      body: "These cards are the locked targets. Their coordinates are not drawn on the Earth map. The score card lists the fixed scales."
+    }
+  ];
+  const root = document.getElementById("pm-tour");
+  const card = document.getElementById("pm-tour-card");
+  const ring = document.getElementById("pm-tour-ring");
+  let index = 0;
+
+  function shade(id, left, top, width, height) {
+    const el = document.getElementById(id);
+    el.style.left = left + "px";
+    el.style.top = top + "px";
+    el.style.width = width + "px";
+    el.style.height = height + "px";
+  }
+
+  function place(el) {
+    el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    const rect = el.getBoundingClientRect();
+    const pad = 8;
+    const box = {
+      left: Math.max(8, rect.left - pad),
+      top: Math.max(8, rect.top - pad),
+      right: Math.min(window.innerWidth - 8, rect.right + pad),
+      bottom: Math.min(window.innerHeight - 8, rect.bottom + pad)
+    };
+    box.width = Math.max(24, box.right - box.left);
+    box.height = Math.max(24, box.bottom - box.top);
+    shade("pm-tour-top", 0, 0, window.innerWidth, box.top);
+    shade("pm-tour-bottom", 0, box.bottom, window.innerWidth, Math.max(0, window.innerHeight - box.bottom));
+    shade("pm-tour-left", 0, box.top, box.left, box.height);
+    shade("pm-tour-right", box.right, box.top, Math.max(0, window.innerWidth - box.right), box.height);
+    ring.style.left = box.left + "px";
+    ring.style.top = box.top + "px";
+    ring.style.width = box.width + "px";
+    ring.style.height = box.height + "px";
+    const cardWidth = Math.min(380, window.innerWidth - 32);
+    let left = box.left;
+    let top = box.bottom + 12;
+    if (top + 220 > window.innerHeight) top = Math.max(12, box.top - 230);
+    if (left + cardWidth > window.innerWidth - 12) left = window.innerWidth - cardWidth - 12;
+    card.style.width = cardWidth + "px";
+    card.style.left = Math.max(12, left) + "px";
+    card.style.top = top + "px";
+  }
+
+  function show(next) {
+    index = next;
+    const step = steps[index];
+    const el = document.querySelector(step.sel);
+    document.getElementById("pm-tour-count").textContent = (index + 1) + " of " + steps.length;
+    document.getElementById("pm-tour-title").textContent = step.title;
+    document.getElementById("pm-tour-body").textContent = step.body;
+    document.getElementById("pm-tour-back").hidden = index === 0;
+    document.getElementById("pm-tour-next").textContent = index === steps.length - 1 ? "Done" : "Next";
+    if (el) place(el);
+    document.getElementById("pm-tour-next").focus();
+  }
+
+  function openTour() {
+    root.hidden = false;
+    show(0);
+  }
+
+  function closeTour() {
+    root.hidden = true;
+    try { localStorage.setItem("pm-tour-seen", "1"); } catch (error) { /* storage can be blocked */ }
+  }
+
+  document.getElementById("pm-tour-next").addEventListener("click", () => {
+    if (index >= steps.length - 1) closeTour();
+    else show(index + 1);
+  });
+  document.getElementById("pm-tour-back").addEventListener("click", () => { if (index > 0) show(index - 1); });
+  document.getElementById("pm-tour-skip").addEventListener("click", closeTour);
+  document.getElementById("pm-guide").addEventListener("click", openTour);
+  window.addEventListener("resize", () => { if (!root.hidden) show(index); });
+  document.addEventListener("keydown", (event) => {
+    if (root.hidden) return;
+    if (event.key === "Escape") closeTour();
+    if (event.key === "ArrowRight") document.getElementById("pm-tour-next").click();
+    if (event.key === "ArrowLeft" && index > 0) show(index - 1);
+  });
+  let seen = false;
+  try { seen = localStorage.getItem("pm-tour-seen") === "1"; } catch (error) { seen = false; }
+  if (!seen) openTour();
 }
 
 start().catch((error) => {

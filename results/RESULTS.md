@@ -62,7 +62,7 @@ Published score 0.167981, from `ndvi_median`, `precip_median_mm_hr`, and `lst_ni
 
 ### Matches
 
-Slope. Median slope is 9.47 degrees (Copernicus DEM, GLO-30 Public, 2021 release). The locked lunar interquartile range is 8.0-16.7 degrees, and the lunar median is 12.3 degrees (LOLA Site01, patch longitude -137.4771, patch latitude -89.4632). The Earth median is inside the band. The match is a mobility comparison on that slope range. The slope row was not part of the score 0.167981.
+Slope. Median slope is 9.48 degrees (Copernicus DEM, GLO-30 Public, 2021 release; the source row rounds 9.476 degrees to 9.48). The locked lunar interquartile range is 8.0-16.7 degrees, and the lunar median is 12.3 degrees (LOLA Site01, patch longitude -137.4771, patch latitude -89.4632). The Earth median is inside the band. The match is a mobility comparison on that slope range. The slope row was not part of the score 0.167981.
 
 The score 0.167981 is the weighted distance of these three rows. No Moon or Mars value for these three quantities is in `results/sources.csv`. Each Earth number stands alone.
 
@@ -84,11 +84,11 @@ Median elevation 5330.7 m has no lunar or Martian elevation in `results/sources.
 
 ### How a mission would use it
 
-The control comparison supports one rover drive on the measured median slope of 9.47 degrees, inside the locked band of 8.0-16.7 degrees, on the patch whose median NDVI is 0.00925. That drive is the comparison for the Kunlun rehearsal. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
+The control comparison supports one rover drive on the measured median slope of 9.48 degrees, inside the locked band of 8.0-16.7 degrees, on the patch whose median NDVI is 0.00925. That drive is the comparison for the Kunlun rehearsal. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
 
 ### Confidence
 
-Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score omitted slope. The slope measured later, 9.47 degrees, does fall inside 8.0-16.7 degrees, and that comparison is reported above as its own row.
+Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score omitted slope. The slope measured later, 9.48 degrees, does fall inside 8.0-16.7 degrees, and that comparison is reported above as its own row.
 
 ## Mars
 
@@ -110,7 +110,7 @@ Ground ice, in this dossier, uses cold and barren ground. The Earth rows that sp
 | ndvi_median | 0.00925 | NDVI | -68.9 | -27.9 |
 | precip_median_mm_hr | 0.008 | mm/hr | -68.9 | -27.9 |
 | lst_night_median_k | 254.45 | kelvin | -68.9 | -27.9 |
-| slope_median_deg | 9.47 | degrees | -68.9 | -27.9 |
+| slope_median_deg | 9.48 | degrees | -68.9 | -27.9 |
 | elevation_median | 5330.7 | m | -68.9 | -27.9 |
 | lunar slope interquartile range | 8.0-16.7 | degrees | -137.4771 | -89.4632 |
 | lunar slope median | 12.3 | degrees | -137.4771 | -89.4632 |
