@@ -69,7 +69,9 @@ The batch published ranking is the unfiltered June ranking (`results/top5.csv`),
 
 The slope band is the Moon comparison. Vinchina’s later patch median, 9.48 degrees, sits inside 8.0–16.7 degrees. Kunlun’s later patch median, 7.08 degrees, sits 0.92 degrees below the lower edge. Both patch slopes were measured after the published score. The global `slope_median_deg` column is still null, so those degrees are not inside 0.186845 or 0.167981.
 
-Vegetation, rain, and night temperature have no Moon or Mars value in `results/sources.csv`. Each of those Earth numbers stands alone. Median elevation at the two patches also stands alone: no lunar or Martian elevation is in the source table. The locked Mars case, ground ice at Badger, is recorded in `notes/targets.md`. Minerals, an ice-map raster, and a dust index there are blank. No Diviner temperature is in the source table. A permanently shadowed lunar floor is colder than any outdoor Earth site, so the June night temperatures are not a thermal analog for that floor.
+The patch-slope comparison is a direct terrain check against the locked lunar band; it is not validation of the three-feature score or of rover performance. Vegetation, rain, and night temperature have no Moon or Mars value in `results/sources.csv`. Each of those Earth numbers stands alone. Median elevation at the two patches also stands alone: no lunar or Martian elevation is in the source table.
+
+The locked Mars target, ground ice at Badger, has published target evidence: Bramson et al. (2015) interpreted CTX and SHARAD observations, with MOLA-based clutter simulations, as evidence for a decameters-thick layer that is mostly excess water ice at a flat terrace 43 m deep ([DOI](https://doi.org/10.1002/2015GL064844)). This team did not process that radar data or a local Mars ice map. No Earth ice/permafrost layer was used, so no Earth ice analog is identified. Minerals and a dust index remain blank. No Diviner temperature is in the source table. A permanently shadowed lunar floor is colder than any outdoor Earth site, so the June night temperatures are not a thermal analog for that floor.
 
 ## Uncertainty
 
@@ -79,4 +81,4 @@ Weight draws measure only sensitivity to the named artificial weight distributio
 
 Changing the slope weight does not change the published ranking, because `slope_median_deg` is null on all 577134 land cells. The patch slopes stay a separate comparison.
 
-The largest missing dataset is an ice or permafrost map. None was opened. Worldview snow is not that map. Confidence stays low while the map is absent.
+The largest gap for the Mars case is an Earth ice/permafrost layer. None was used. Worldview snow is not that measurement. Confidence stays low while the Earth-side ice comparison is absent.

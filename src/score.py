@@ -10,6 +10,7 @@ Lower score is a closer partial match on the measured features.
 from __future__ import annotations
 
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -101,8 +102,11 @@ def load_weights() -> dict:
     for key in ("cold_tail_percentile", "distance_scale_percentile"):
         if key not in payload:
             stop([f"{WEIGHTS_JSON} needs '{key}'."])
-        value = float(payload[key])
-        if not 0 < value < 100:
+        try:
+            value = float(payload[key])
+        except (TypeError, ValueError):
+            stop([f"{WEIGHTS_JSON} {key} must be a number."])
+        if not math.isfinite(value) or not 0 < value < 100:
             stop([f"{WEIGHTS_JSON} {key} must be between 0 and 100. Found {value}."])
         payload[key] = value
     features = payload["features"]
@@ -117,7 +121,23 @@ def load_weights() -> dict:
             )
         if not isinstance(spec, dict) or "weight" not in spec:
             stop([f"{WEIGHTS_JSON} feature '{name}' needs a weight."])
-        cleaned[name] = float(spec["weight"])
+        try:
+            weight = float(spec["weight"])
+        except (TypeError, ValueError):
+            stop(
+                [
+                    f"{WEIGHTS_JSON} feature '{name}' weight must be a finite, "
+                    "non-negative number."
+                ]
+            )
+        if not math.isfinite(weight) or weight < 0:
+            stop(
+                [
+                    f"{WEIGHTS_JSON} feature '{name}' weight must be a finite, "
+                    f"non-negative number. Found {weight}."
+                ]
+            )
+        cleaned[name] = weight
     payload["features"] = cleaned
     return payload
 

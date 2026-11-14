@@ -1,18 +1,17 @@
-"""Build the coarse land-cell measurement table.
+"""Build a coarse land-cell table for one month of MODIS and IMERG data.
 
-Reads only the June 2024 granules named in notes/data-log.md:
-
-- data/raw/MOD13C2.A2024153.061.2024198104950.hdf
-- data/raw/MOD11C3.A2024153.061.2024187024328.hdf
-- data/raw/3B-MO.MS.MRG.3IMERG.20240601-S000000-E235959.06.V07B.HDF5
-
-Writes data/processed/features.csv and notes/features.md. Does not score,
-rank, or choose a site. Slope stays blank because no global elevation file
-was successfully downloaded.
+With no arguments, this preserves the published June 2024 baseline outputs.
+With ``--year`` and ``--month``, it resolves that month's granules and writes
+a compressed, versioned table under data/processed/monthly/.
 """
 
 from __future__ import annotations
 
+import argparse
+import calendar
+from datetime import date
+import hashlib
+import json
 import sys
 import warnings
 from pathlib import Path
@@ -38,13 +37,45 @@ MODIS_DEG = 0.05
 KM_PER_DEG = 111.32
 
 
-def require_files() -> None:
-    missing = [str(path) for path in (NDVI_FILE, LST_FILE, PRECIP_FILE) if not path.is_file()]
+def require_files(paths: tuple[Path, Path, Path]) -> None:
+    missing = [str(path) for path in paths if not path.is_file()]
     if missing:
         print("Stopping. Logged measurement files are missing:", file=sys.stderr)
         for path in missing:
             print(f"  {path}", file=sys.stderr)
         sys.exit(1)
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def monthly_input_files(year: int, month: int) -> tuple[Path, Path, Path]:
+    """Find the three logged product granules for one calendar month."""
+    first = date(year, month, 1)
+    year_day = f"{year}{first.timetuple().tm_yday:03d}"
+    year_month = f"{year}{month:02d}"
+    patterns = (
+        f"MOD13C2.A{year_day}.061.*.hdf",
+        f"MOD11C3.A{year_day}.061.*.hdf",
+        f"3B-MO.MS.MRG.3IMERG.{year_month}01-S000000-E235959.*.HDF5",
+    )
+    labels = ("MOD13C2 NDVI", "MOD11C3 LST", "monthly IMERG precipitation")
+    selected = []
+    for label, pattern in zip(labels, patterns, strict=True):
+        matches = sorted(RAW.glob(pattern))
+        if len(matches) != 1:
+            found = ", ".join(path.name for path in matches) or "none"
+            raise SystemExit(
+                f"Expected exactly one {label} granule for {year:04d}-{month:02d}; "
+                f"found {len(matches)} ({found})."
+            )
+        selected.append(matches[0])
+    return selected[0], selected[1], selected[2]
 
 
 def sds_array(hdf: SD, name: str) -> tuple[np.ndarray, dict]:
@@ -99,8 +130,8 @@ def block_median(north_up: np.ndarray, factor: int) -> tuple[np.ndarray, np.ndar
     return median, count
 
 
-def read_ndvi() -> tuple[np.ndarray, str]:
-    hdf = SD(str(NDVI_FILE), SDC.READ)
+def read_ndvi(path: Path) -> tuple[np.ndarray, str]:
+    hdf = SD(str(path), SDC.READ)
     try:
         raw, attrs = sds_array(hdf, "CMG 0.05 Deg Monthly NDVI")
     finally:
@@ -114,8 +145,8 @@ def read_ndvi() -> tuple[np.ndarray, str]:
     return physical, scaled_as
 
 
-def read_lst_and_land() -> tuple[np.ndarray, np.ndarray, np.ndarray, str, str]:
-    hdf = SD(str(LST_FILE), SDC.READ)
+def read_lst_and_land(path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray, str, str]:
+    hdf = SD(str(path), SDC.READ)
     try:
         day_raw, day_attrs = sds_array(hdf, "LST_Day_CMG")
         lst_raw, lst_attrs = sds_array(hdf, "LST_Night_CMG")
@@ -138,8 +169,8 @@ def read_lst_and_land() -> tuple[np.ndarray, np.ndarray, np.ndarray, str, str]:
     return day, lst, land, day_scaled_as, night_scaled_as
 
 
-def read_precip() -> tuple[np.ndarray, str]:
-    with h5py.File(PRECIP_FILE, "r") as handle:
+def read_precip(path: Path) -> tuple[np.ndarray, str]:
+    with h5py.File(path, "r") as handle:
         data = handle["Grid/precipitation"]
         raw = np.array(data[0], dtype=np.float64)  # (lon, lat), southwest origin
         fill = float(data.attrs["_FillValue"])
@@ -182,6 +213,12 @@ def null_percent(series: pd.Series) -> float:
 
 
 def write_notes(
+    ndvi_file: Path,
+    lst_file: Path,
+    precip_file: Path,
+    out_md: Path,
+    year: int,
+    month: int,
     n_land: int,
     percents: list[tuple[str, float]],
     ndvi_scale_text: str,
@@ -192,11 +229,12 @@ def write_notes(
 ) -> None:
     ns_km = CELL_DEG * KM_PER_DEG
     percent_lines = "\n".join(f"| `{name}` | {pct:.2f}% |" for name, pct in percents)
+    month_label = f"{calendar.month_name[month]} {year}"
     text = f"""# Feature grid
 
-One row in `data/processed/features.csv` is one land cell. This file defines every column. It does not weight cells and it does not rank them.
+One row in this feature table is one land cell. This file defines every column. It does not weight cells and it does not rank them.
 
-June 2024 is one month. It is summer in the north and winter in the south. These columns are not a climate normal.
+{month_label} is one month. It is not a climate normal.
 
 ## Grid
 
@@ -237,17 +275,17 @@ Percent null (blank values among land cells):
 | --- | --- | --- | --- |
 | `lat_center_deg` | degrees north | cell geometry of the logged CMG | center of the {CELL_DEG}° cell. Row 0 of each MODIS grid is the north edge. |
 | `lon_center_deg` | degrees east | cell geometry of the logged CMG | center of the {CELL_DEG}° cell. Column 0 is the dateline at 180°W, increasing east. |
-| `ndvi_median` | NDVI (native index) | `{NDVI_FILE.relative_to(ROOT).as_posix()}` layer `CMG 0.05 Deg Monthly NDVI` | {ndvi_scale_text}. Then the median of the finite pixels in the cell. |
+| `ndvi_median` | NDVI (native index) | `{ndvi_file.relative_to(ROOT).as_posix()}` layer `CMG 0.05 Deg Monthly NDVI` | {ndvi_scale_text}. Then the median of the finite pixels in the cell. |
 | `ndvi_valid_count` | count of 0.05° pixels | same NDVI layer | pixels that are not `_FillValue` (−3000) and lie inside `valid_range` (−2000 to 10000). |
-| `lst_day_median_k` | kelvin | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `LST_Day_CMG` | {lst_day_scale_text}. Then the median of valid pixels in the cell. |
+| `lst_day_median_k` | kelvin | `{lst_file.relative_to(ROOT).as_posix()}` layer `LST_Day_CMG` | {lst_day_scale_text}. Then the median of valid pixels in the cell. |
 | `lst_day_valid_count` | count of 0.05° pixels | same day LST layer | pixels that are not `_FillValue` and lie inside that layer’s `valid_range`. |
-| `lst_night_median_k` | kelvin | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `LST_Night_CMG` | {lst_night_scale_text}. Then the median of valid pixels in the cell. This remains the only temperature feature in the score. |
+| `lst_night_median_k` | kelvin | `{lst_file.relative_to(ROOT).as_posix()}` layer `LST_Night_CMG` | {lst_night_scale_text}. Then the median of valid pixels in the cell. This remains the only temperature feature in the score. |
 | `lst_night_valid_count` | count of 0.05° pixels | same night LST layer | pixels that are not `_FillValue` and lie inside that layer’s `valid_range`. |
 | `lst_day_night_range_median_k` | kelvin | same file, layers `LST_Day_CMG` and `LST_Night_CMG` | Median of paired valid-pixel differences `day - night` within the cell. This is a descriptive measure, not a score term. |
 | `lst_day_night_range_valid_count` | count of paired 0.05° pixels | same day and night LST layers | Pixels valid in both layers; a missing day or night value stays missing. |
-| `precip_median_mm_hr` | mm/hr | `{PRECIP_FILE.relative_to(ROOT).as_posix()}` dataset `Grid/precipitation` | median of finite pixels. The file unit is mm/hr. `BinMethod=ARITHMETIC_MEAN` and `TimeInterval=MONTH`, so the stored value is already the June mean rate. It was not converted to a monthly millimetre total. This is the dryness measurement, left in the product unit. A lower rate is drier. |
+| `precip_median_mm_hr` | mm/hr | `{precip_file.relative_to(ROOT).as_posix()}` dataset `Grid/precipitation` | median of finite pixels. The file unit is mm/hr. `BinMethod=ARITHMETIC_MEAN` and `TimeInterval=MONTH`, so the stored value is the month's mean rate. It was not converted to a monthly millimetre total. This is the dryness measurement, left in the product unit. A lower rate is drier. |
 | `precip_valid_count` | count of 0.1° pixels | same precipitation dataset | pixels that are not the fill value ({precip_fill}). |
-| `land_pixel_count` | count of 0.05° pixels | `{LST_FILE.relative_to(ROOT).as_posix()}` layer `Percent_land_in_grid` | pixels inside `valid_range` 1 to 100. This is the land test, not an analog feature. |
+| `land_pixel_count` | count of 0.05° pixels | `{lst_file.relative_to(ROOT).as_posix()}` layer `Percent_land_in_grid` | pixels inside `valid_range` 1 to 100. This is the land test, not an analog feature. |
 | `slope_median_deg` | degrees | no file | not computed. Entirely blank. |
 | `slope_valid_count` | count | no file | not computed. Entirely blank. |
 
@@ -261,17 +299,40 @@ When a valid count is even, the median is the arithmetic mean of the two central
 
 No column is a weight, a rank, or a site choice. Slope was not filled from the locked lunar band. Missing vegetation, night temperature, or precipitation was not copied from a neighboring cell.
 """
-    OUT_MD.write_text(text, encoding="utf-8", newline="\n")
+    out_md.parent.mkdir(parents=True, exist_ok=True)
+    out_md.write_text(text, encoding="utf-8", newline="\n")
 
 
 def main() -> None:
-    require_files()
+    parser = argparse.ArgumentParser(description="Build one monthly Earth feature table.")
+    parser.add_argument("--year", type=int, help="Year of the monthly granules.")
+    parser.add_argument("--month", type=int, choices=range(1, 13), help="Calendar month (1-12).")
+    args = parser.parse_args()
+
+    if (args.year is None) != (args.month is None):
+        parser.error("--year and --month must be supplied together.")
+    if args.year is None:
+        year, month = 2024, 6
+        input_files = (NDVI_FILE, LST_FILE, PRECIP_FILE)
+        out_csv, out_md = OUT_CSV, OUT_MD
+    else:
+        assert args.month is not None
+        year, month = args.year, args.month
+        if year < 2000:
+            parser.error("MOD13C2 monthly inputs are required from year 2000 onward.")
+        input_files = monthly_input_files(year, month)
+        output_dir = ROOT / "data" / "processed" / "monthly" / f"{year:04d}-{month:02d}"
+        out_csv = output_dir / "features.csv.gz"
+        out_md = output_dir / "features.md"
+
+    require_files(input_files)
     if abs(CELL_DEG / MODIS_DEG - round(CELL_DEG / MODIS_DEG)) > 1e-9:
         raise SystemExit("Cell size does not tile the MODIS grid.")
 
-    ndvi, ndvi_scale_text = read_ndvi()
-    lst_day, lst_night, land, lst_day_scale_text, lst_night_scale_text = read_lst_and_land()
-    precip, precip_fill = read_precip()
+    ndvi_file, lst_file, precip_file = input_files
+    ndvi, ndvi_scale_text = read_ndvi(ndvi_file)
+    lst_day, lst_night, land, lst_day_scale_text, lst_night_scale_text = read_lst_and_land(lst_file)
+    precip, precip_fill = read_precip(precip_file)
 
     modis_factor = int(round(CELL_DEG / MODIS_DEG))
     imerg_factor = int(round(CELL_DEG / 0.1))
@@ -307,7 +368,7 @@ def main() -> None:
     south_ndvi_blank = int((keep & south & ~np.isfinite(ndvi_median)).sum())
     ndvi_south_note = (
         f"Of the land cells south of 60°S, {south_ndvi_blank} of {south_land} "
-        "have a blank NDVI. That June gap, not a dropped column, is why "
+        "have a blank NDVI. That month’s gap, not a dropped column, is why "
         "`ndvi_median` is blank on a large share of the table."
     )
 
@@ -362,15 +423,45 @@ def main() -> None:
     frame["lat_center_deg"] = frame["lat_center_deg"].map(lambda value: f"{value:.1f}")
     frame["lon_center_deg"] = frame["lon_center_deg"].map(lambda value: f"{value:.1f}")
 
-    OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(
-        OUT_CSV,
+        out_csv,
         index=False,
         na_rep="",
         float_format="%.6f",
         columns=value_columns,
     )
+    if args.year is not None:
+        monthly_manifest = {
+            "method_version": "monthly-cell-grid-v1",
+            "period": {"year": year, "month": month},
+            "feature_table": out_csv.relative_to(ROOT).as_posix(),
+            "feature_table_sha256": sha256_file(out_csv),
+            "quality_filters": {
+                "MOD13C2_VI_quality": "not applied",
+                "MOD11C3_QC_Day_and_QC_Night": "not applied",
+            },
+            "raw_inputs": [
+                {
+                    "filename": path.name,
+                    "sha256": sha256_file(path),
+                }
+                for path in input_files
+            ],
+        }
+        manifest_path = out_csv.parent / "manifest.json"
+        manifest_path.write_text(
+            json.dumps(monthly_manifest, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
     write_notes(
+        ndvi_file,
+        lst_file,
+        precip_file,
+        out_md,
+        year,
+        month,
         n_land,
         percents,
         ndvi_scale_text,
@@ -384,8 +475,8 @@ def main() -> None:
     print("Percent null:")
     for name, pct in percents:
         print(f"  {name}: {pct:.2f}%")
-    print(f"Wrote {OUT_CSV.relative_to(ROOT).as_posix()}")
-    print(f"Wrote {OUT_MD.relative_to(ROOT).as_posix()}")
+    print(f"Wrote {out_csv.relative_to(ROOT).as_posix()}")
+    print(f"Wrote {out_md.relative_to(ROOT).as_posix()}")
 
 
 if __name__ == "__main__":

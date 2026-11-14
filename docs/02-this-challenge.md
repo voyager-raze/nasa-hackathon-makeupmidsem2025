@@ -68,24 +68,25 @@ Scale matters. A whole desert is usually too big to be one analog. A crater, a v
 - The Moon target is a named south-pole ridge region used in Artemis planning, with a slope range, a lighting pattern, and cold traps nearby.
 - The Mars target is a named region, with one process called out (ground ice, or dust and salts).
 - Earth was screened with named datasets for slope, bareness, temperature, and dryness.
-- Site A is less cited than Atacama. Here are the numbers, the units, and the sources.
-- Site B is Atacama, or another famous site, scored with the same method, so the reader can see whether A is actually interesting.
+- Site A is a global-screen discovery candidate; Site B is the best cell inside a defined Atacama-region hold-out, scored with the same method. Neither is presented as a validated analog.
+- A separate, target-specific slope check shows whether either patch is inside the named lunar terrain band. Keep that check outside a score whose global slope data are missing.
 - Gravity, vacuum, radiation, and air are listed as non-matches.
-- The last section says what a field team would rehearse at Site A, and what they must rehearse in a lab instead.
+- The last section proposes a paired rover-mobility trial and says what would still need laboratory testing.
 
 That shape hits relevance, validity, creativity, impact, and presentation at the same time.
 
 ## How this team will answer it
 
-The working concept is a **partial-match finder**, described step by step in [05-master-plan.md](05-master-plan.md).
+The working project is **Mission Analog Readiness**. Its core is a partial-match finder, described step by step in [05-master-plan.md](05-master-plan.md).
 
 - Two targets, not “the whole Moon” and “the whole Mars.”
 - A coarse global screen so the result is not a place chosen only because it is famous.
-- One less-famous Earth site, plus one famous site run through the same score.
+- One global discovery cell, plus the best cell in a held-out Atacama-region box scored through the same function.
+- A direct lunar-slope comparison kept separate from the three-feature proxy score.
 - A short dossier with three headings: **matches**, **breaks**, **how a mission would use it**.
 - A map and a seven-slide demo.
 
-Other teams this weekend are already ranking a fixed list of well-known analog sites. A fixed famous list can be careful and still miss the brief’s request to look for places that have received less attention. Our edge is the screen, the comparison, and the honest gaps.
+The project’s contribution is not a novel distance formula or a claim that one site is “the best analog.” It makes the reviewer-facing workflow explicit: globally screen, compare against a held-out region, check a mission-relevant terrain measure directly, and turn the result into a falsifiable field-test proposal. The current evidence favors Vinchina for an in-band mobility study; Kunlun supplies a contrasting lower-slope case. Access and field validation remain open.
 
 ## The sentence to keep on the title slide
 

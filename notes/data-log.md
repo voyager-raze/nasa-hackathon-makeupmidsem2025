@@ -12,6 +12,14 @@ The July 2024 MOD13C2 attempt returned HTTP 401 at the protected Earthdata granu
 
 https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD13C2.061/MOD13C2.A2024183.061.2024228034735/MOD13C2.A2024183.061.2024228034735.hdf
 
+## Multi-year pipeline status
+
+`src/build_features.py --year YYYY --month MM` now builds a compressed, versioned monthly feature table after resolving exactly one matching granule for each product. Its sidecar manifest records SHA-256 hashes for the table and all three source granules, and explicitly records that MOD13C2 VI and MOD11C3 QC flags are not applied. `src/build_monthly_range.py` preflights the full requested date range before processing any month, then builds sequentially. The June 2024 table was rebuilt through this path and exactly matches all 577134 rows and columns in the published `data/processed/features.csv`; it is not a new measurement.
+
+`src/build_climatology.py --start-year 2015 --end-year 2024` requires 120 monthly tables and matching source manifests. It computes day-weighted annual means, sample standard deviation across valid annual means, average yearly monthly minima/maxima, and month/year coverage. A cell needs at least 10 valid months in a year and at least 8 valid years by default. A month contributes only when at least 8 of 16 MODIS pixels or 2 of 4 IMERG pixels are valid for that cell; the output records mean valid-pixel support. The climatology manifest carries forward monthly-table hashes, source-manifest hashes, and raw-granule hashes. A changed input hash, unsupported manifest, or grid/row-order mismatch stops the run.
+
+The ten-year inventory was checked: **119 of 120 monthly feature tables are missing**. Only June 2024 granules exist locally; the July 2024 MOD13C2 request above previously returned HTTP 401. The climatology and its separate score have not been computed. Published scores, targets, weights, and rankings remain unchanged. The decade method uses the same three Earth proxy families; it adds seasonal/interannual context but does not add a measured ice, dust, or global slope factor. MOD11 quality flags remain unfiltered in this pipeline and must be addressed before treating its thermal values as high-quality evidence.
+
 `.gitignore` ignores `*.hdf`, `*.h5`, `*.hdf5`, and `*.he5`, so these files stay on this machine and are not committed. The filename in this log is the record.
 
 ## Resources-tab dataset this project will use

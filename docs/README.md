@@ -26,7 +26,7 @@ Earth cannot copy lunar gravity, vacuum, radiation, or the thin Martian air. Say
 
 | File | What it is for |
 | --- | --- |
-| [01-space-apps-in-plain-words.md](01-space-apps-in-plain-words.md) | What the hackathon is, and how judging works |
+| [01-space-apps-in-plain-words.md](01-space-apps-in-plain-words.md) | What the hackathon is, how judging works, and the dashboard's 90-second review path |
 | [02-this-challenge.md](02-this-challenge.md) | What an analog is, and what a strong answer does |
 | [03-moon-mars-and-earth-limits.md](03-moon-mars-and-earth-limits.md) | The two targets, and what Earth cannot copy |
 | [04-data-resources.md](04-data-resources.md) | Official resource links, and which data to open first |
@@ -34,3 +34,7 @@ Earth cannot copy lunar gravity, vacuum, radiation, or the thin Martian air. Say
 | [06-submission-checklist.md](06-submission-checklist.md) | Form fields, links, slides, and the final check |
 
 If time is short, read [05-master-plan.md](05-master-plan.md) and [06-submission-checklist.md](06-submission-checklist.md) and build. The earlier files are there so the science stays clear while you work.
+
+## Browser-readable evidence pages
+
+The dashboard links to HTML versions of the dossier, scoring method, data log, and credibility notes. The Markdown files remain the source of truth. After editing one, regenerate all four pages with `python src/build_evidence_pages.py` (requires Pandoc). The shared page template and styles are in `web/`.

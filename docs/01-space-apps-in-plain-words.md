@@ -34,7 +34,7 @@ A clear, honest, data-backed project is what moves a team from “submitted” t
 
 ## How judges look at a project
 
-Judges use five questions. They carry similar weight. A project that is brilliant on science and confusing to watch still loses points. A beautiful slide deck that never uses NASA data also loses points.
+The public challenge materials describe five review criteria. Use them as five lenses, not as a claim about a hidden scoring formula: the public materials do not establish numeric weights.
 
 | Criterion | The question a judge is asking |
 | --- | --- |
@@ -45,6 +45,26 @@ Judges use five questions. They carry similar weight. A project that is brillian
 | Presentation | Can a stranger understand the story, the demo, and the result quickly? |
 
 For this challenge, a useful reader is a scientist or engineer who picks Earth sites to test instruments, robots, or field methods before a Moon or Mars mission. The project should help that person see a match, see the gaps, and see a next test.
+
+### What we know about the review process
+
+The public event guidance describes a staged selection: local-event or Universal Event judging selects nominees, subject-matter experts review nominees, and an executive group selects global winners. That is enough to design for a time-limited expert review; it is not a description of every judge's workflow.
+
+The cited public materials ask teams to disclose their use of generative tools in the project submission. They do not say whether judges use AI to screen, summarize, or score projects. Do not claim that NASA judges use AI—or that they do not. This dashboard is designed to help a human reviewer trace each conclusion to evidence; any AI reading aid should be optional, cite the same sources, and never replace the judge's decision.
+
+### A 90-second review path for this project
+
+1. **Finding and use (15 seconds):** Vinchina has both the lower three-proxy score and a median slope inside the lunar band; Kunlun is below it. Treat Vinchina as the first terrain-rehearsal candidate and Kunlun as a lower-slope comparison, subject to access and safety checks.
+2. **Evidence (25 seconds):** Check that the June 2024 score uses three Earth-side proxies with no direct planetary referents. Then compare the separately measured Copernicus patch slopes with the LOLA 8.0–16.7° lunar IQR; slope was not included in either score.
+3. **Validity and limits (25 seconds):** The climate screen is one month. Bramson et al. (2015) provide published radar evidence for the Badger ground-ice target, but no Earth ice/permafrost layer was used, so no Earth ice analog is identified. Earth cannot reproduce gravity, vacuum or thin air, radiation, or a permanently shadowed lunar thermal environment.
+4. **Reproducibility (15 seconds):** Open the dossier, method, data log, and validation notes. Treat a null as missing—not as a match.
+5. **Creativity and presentation (10 seconds):** The project combines a global screen, an Atacama-region hold-out comparator, a separate target-specific terrain check, and a testable paired-trial proposal. The distance formula itself is conventional; the map is an index into the evidence, not the evidence itself.
+
+These are navigation prompts, not official NASA score weights. If time is very short, read the finding, validity caveats, and the linked source table before exploring the map.
+
+The dashboard opens this 90-second guide on a first visit in a browser profile or a fresh private/incognito session. Dismissing it is remembered in that browser storage; use **90-sec review** to open it again.
+
+**Public references:** [2026 challenge page](https://www.spaceappschallenge.org/2026/challenges/permanent-moon-base-locations-and-mars/) and [Space Apps FAQ](https://www.spaceappschallenge.org/2026/participate/faq/). Event pages may change; follow the current event instructions if they differ from this summary.
 
 ## What the project page must include
 

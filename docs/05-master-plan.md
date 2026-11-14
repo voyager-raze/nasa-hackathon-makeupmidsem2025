@@ -3,13 +3,15 @@
 **Deadline:** Sunday, 15 November 2026, 11:59 pm Delhi time.  
 **Stop editing the form by 10:30 pm** so a broken link can still be fixed.  
 **Team:** Mid-Sem Make Up, Delhi local event.  
-**Working name:** Partial Match. Change it if a better short name appears. The science does not depend on the name.
+**Project name:** Mission Analog Readiness. **Partial Match** names the screening method, not a claim that sites are mission-ready.
+
+> **Current result:** This plan records the build workflow; the screening and seven-slide deck are complete. The published score uses three June 2024 Earth proxies. Slope was checked later on the two shortlisted patches and is not in the score. Vinchina is the in-band terrain candidate; Kunlun is the lower-slope comparison. The proposed field trial has not been run, and no Earth ice/permafrost analog is claimed.
 
 This plan assumes the notes in [03-moon-mars-and-earth-limits.md](03-moon-mars-and-earth-limits.md) and the data order in [04-data-resources.md](04-data-resources.md). Do not reopen the concept unless the first data pass makes the default pair impossible.
 
 ## The project in one paragraph
 
-Partial Match picks one Artemis south-pole ridge and one Mars ground-ice or dust site, turns their workable traits into Earth measurements, screens coarse Earth data, and publishes the best less-famous hit next to one famous analog scored the same way. Each site card has three parts: what matches, where the analogy breaks, and what a mission team would rehearse there. Gravity, vacuum, thin air, and radiation are listed as non-matches.
+Partial Match screens June 2024 NDVI, precipitation, and night land-surface temperature across coarse Earth cells, then compares a global-screen discovery candidate with the best eligible cell in a defined Atacama-region hold-out. The Moon target is the Shackleton–de Gerlache connecting ridge; the Mars target is Badger in Arcadia Planitia, with published radar evidence for ground ice. A separate Copernicus-to-LOLA slope check puts Vinchina inside the lunar slope band and Kunlun below it. The score is a proxy index, not a direct cross-world similarity measure or probability of mission success. The result supports a proposed, not-yet-run paired rover-mobility study; it does not identify an Earth ice analog.
 
 ## What “done” means
 
@@ -40,13 +42,13 @@ Stop when `notes/targets.md` exists. Do not start the global download on Saturda
 Time box: until early afternoon. If the screen is not producing candidate cells by 2:00 pm, switch to the manual fallback at the bottom of this file.
 
 1. Pick the coarse layers from [04-data-resources.md](04-data-resources.md): a vegetation index, land-surface temperature, a dryness or precipitation layer you can cite, and elevation only for shortlisted patches.
-2. Build a grid of about 10–50 km. Score cells against the lunar slope band, near-zero vegetation, dryness, and a cold or high-range temperature. Write the weights in code or in a table. Missing data stays missing.
+2. Build a grid of about 10–50 km. Score only the features measured across the global grid. If the slope column is null, leave slope out of the score and disclose that omission; compare local patch slopes with the lunar band separately. Write the weights in code or in a table. Missing data stays missing.
 3. Drop cells inside the famous control you chose (start with the Atacama Desert unless another famous site is a fairer control). Rank what remains.
 4. Take the top five named regions. Look at each in [NASA Worldview](https://worldview.earthdata.nasa.gov/). Reject any cell that is ocean, ice-sheet interior with no workable ground, a city, or a data error.
 5. Choose:
    - **Site A:** the best remaining region a non-specialist has heard of less often than Atacama.
    - **Site B:** the famous control, scored with the same weights.
-6. For A and B only, download a local elevation tile (SRTM or Copernicus DEM; SRTM does not cover Antarctica or the far north) and compute median slope. If the slope misses the lunar band by a wide margin, say so. Do not quietly change the band.
+6. For A and B only, download a local elevation tile (SRTM or Copernicus DEM; SRTM does not cover Antarctica or the far north) and compute median slope. Report this as a separate patch check, not as part of the global score unless comparable slope data exist for the full grid. If a slope misses the lunar band, say so. Do not quietly change the band.
 
 Save `sources.csv` as you go: quantity, unit, dataset, date, link, patch, method.
 
@@ -103,12 +105,12 @@ Use the first row that is still true. Do not skip the row and keep building the 
 - A claim that Ladakh, the Thar Desert, Atacama, or any other home-country site wins before the screen says so. A local site is allowed, and local photos are allowed, only if the same numbers used everywhere else put it on the list.
 - A single similarity percentage with no table under it. If you show a score, show the features, the weights, and the missing cells.
 
-## Order of work for the next coding session
+## What one more week should add
 
-1. `notes/targets.md`
-2. The screen script and `sources.csv`
-3. `RESULTS.md` for Site A and Site B
-4. The map
-5. The seven slides and the form
+1. Process quality-controlled seasonal Earth observations; the June 2024 screen is a one-month snapshot.
+2. Add a cited Earth ice/permafrost layer and test whether a candidate can support a ground-ice operations rehearsal. Until then, do not claim a Mars Earth analog.
+3. Use finer terrain data to assess route-scale slope and roughness, not only a 0.2° cell median.
+4. Check site access, permissions, seasonality, and safety before recommending fieldwork.
+5. If feasible, run the paired rover-mobility trial and publish repeated-run measurements and uncertainty. Until then, the trial remains a proposal.
 
-The checklist in the next file is the last hour, not the first hour.
+The checklist in the next file is the submission review, not evidence that these future validations have been completed.

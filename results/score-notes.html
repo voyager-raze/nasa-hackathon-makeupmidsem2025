@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partial Match — Scoring method</title>
+  <link rel="stylesheet" href="../web/evidence.css">
+</head>
+<body>
+  <nav class="evidence-nav" aria-label="Evidence pages">
+    <a href="../web/index.html">Dashboard</a>
+    <a href="../results/RESULTS.html">Dossiers</a>
+    <a href="../results/score-notes.html">Method</a>
+    <a href="../notes/data-log.html">Data log</a>
+    <a href="../notes/credibility.html">Validation</a>
+  </nav>
+  <main>
+    <h1 id="score-notes">Score notes</h1>
+    <p>The score is a partial match on the measured features, not a
+    probability of mission success. It is a heuristic screening index:
+    none of the three scored features has a direct Moon or Mars referent
+    in the cited source table. The Earth-side targets below are proxies,
+    not planetary measurements.</p>
+    <p>A lower score is a closer partial match. Gravity, vacuum, thin
+    air, and radiation are not in this score.</p>
+    <h2 id="formula">Formula</h2>
+    <p>For each feature that is measured on the cell and was not
+    skipped, the distance is the Earth value compared with the target in
+    that feature's own unit. Each raw distance is then divided by a
+    scale in that same unit: the 95th percentile of that raw distance on
+    land cells where the feature is measured, including cells inside the
+    hold-out. Those divisors are listed below. The score is the weighted
+    mean of the quotients, using only features measured on that
+    cell:</p>
+    <p>score = sum(weight × raw distance / scale) / sum(weight)</p>
+    <p>Weights, the cold-tail percentile, and the scale percentile are
+    read from <code>notes/weights.json</code> on every run. They are not
+    hard-coded in <code>src/score.py</code>. The lunar slope band is
+    read from <code>notes/targets.md</code>.</p>
+    <p>Comparisons:</p>
+    <ul>
+    <li><code>ndvi_median</code>: target is 0. Distance is the absolute
+    departure from 0, in NDVI. A small negative index and a small
+    positive index are both near the target. June NDVI near zero
+    includes snow and ice as well as bare ground. This score does not
+    separate those surfaces.</li>
+    <li><code>precip_median_mm_hr</code>: dryness uses the dry direction
+    of the logged IMERG rate. The target is 0 mm/hr. Distance is the
+    rate when the rate is positive, in mm/hr. June 2024 is one month,
+    not an annual normal. A zero in this column is the dry end of this
+    granule.</li>
+    <li><code>lst_night_median_k</code>: this is the only temperature
+    column in the table. <code>LST_Day_CMG</code> was not reduced, so
+    there is no day–night range to score. The cold-tail target is the
+    10th percentile of measured night land-surface temperature,
+    <strong>214.3 kelvin</strong>. Distance is kelvin above that
+    percentile. A cell at or below it has distance 0.</li>
+    <li><code>slope_median_deg</code>: nearness to the lunar band means
+    0 distance inside the band and, outside it, the degrees to the
+    nearest edge. The band read from <code>notes/targets.md</code> is
+    <strong>8.0–16.7 degrees</strong>.</li>
+    </ul>
+    <p>A cell enters the discovery ranking or the control ranking only
+    when every feature that has a positive weight and a column that is
+    not entirely null is measured on that cell. A missing vegetation,
+    precipitation, or night-temperature value stays out of the score. It
+    is not filled, and the cell is not ranked on the features that
+    remain, because dropping a missing test would make the cell look
+    closer. <code>features_missing</code> on each ranked row still lists
+    the skipped column. Nulls in <code>results/top5.csv</code> are
+    written as <code>null</code>.</p>
+    <h2 id="weights">Weights</h2>
+    <p>File weights this delivery: <code>slope_median_deg</code> 1,
+    <code>ndvi_median</code> 1, <code>precip_median_mm_hr</code> 1,
+    <code>lst_night_median_k</code> 1.</p>
+    <p>Effective weights in the denominator this run:
+    <code>ndvi_median</code> 1, <code>precip_median_mm_hr</code> 1,
+    <code>lst_night_median_k</code> 1.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Feature</th>
+    <th>Weight in <code>notes/weights.json</code></th>
+    <th>Unit of the raw distance</th>
+    <th>This run</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>slope_median_deg</code></td>
+    <td>1</td>
+    <td>degrees</td>
+    <td>not used this run</td>
+    </tr>
+    <tr>
+    <td><code>ndvi_median</code></td>
+    <td>1</td>
+    <td>NDVI</td>
+    <td>used</td>
+    </tr>
+    <tr>
+    <td><code>precip_median_mm_hr</code></td>
+    <td>1</td>
+    <td>mm/hr</td>
+    <td>used</td>
+    </tr>
+    <tr>
+    <td><code>lst_night_median_k</code></td>
+    <td>1</td>
+    <td>kelvin</td>
+    <td>used</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>Changing the slope weight does not change
+    <code>results/top5.csv</code> while <code>slope_median_deg</code> is
+    empty. Changing the weight of a feature in the effective list does.
+    The delivered weights are the weights that produced the delivered
+    ranking.</p>
+    <h2 id="scales">Scales</h2>
+    <p>The scale is the 95th percentile of the raw distance. Dividing by
+    it puts a typical far value near 1 before the weights are applied. A
+    cell farther out than that percentile can score above 1 on that
+    feature.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Feature</th>
+    <th>Scale</th>
+    <th>Raw distance</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>ndvi_median</code></td>
+    <td>0.8304 NDVI</td>
+    <td>absolute departure from 0</td>
+    </tr>
+    <tr>
+    <td><code>precip_median_mm_hr</code></td>
+    <td>0.296 mm/hr</td>
+    <td>mm/hr above 0, the dry end of the logged rate</td>
+    </tr>
+    <tr>
+    <td><code>lst_night_median_k</code></td>
+    <td>86.2 kelvin</td>
+    <td>kelvin above the cold-tail percentile; 0 at or below it</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>The cold-tail target, 214.3 kelvin, is the 10th percentile of
+    <code>lst_night_median_k</code> on land cells where that column is
+    measured. 56883 land cells are at or below it. The warmest latitude
+    among those cells is -70.3 degrees. They are not a discovery result:
+    June NDVI is blank on every land cell south of 60°S, so those cells
+    fail the eligibility rule.</p>
+    <h2 id="features-skipped">Features skipped</h2>
+    <ul>
+    <li><code>slope_median_deg</code>: the column is null on every land
+    cell, so this feature is left out of the score. The slope comparison
+    is not yet measured.</li>
+    </ul>
+    <p>Confidence is lower because the slope comparison is not yet
+    measured. No slope raster was invented. Elevation was reserved for
+    the zoom on the two chosen patches.</p>
+    <h2 id="hold-out">Hold-out</h2>
+    <p>The famous control is the Atacama Desert. Cells whose centers
+    fall inside this bounding box do not compete for
+    <code>results/top5.csv</code>.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Edge</th>
+    <th>Degrees</th>
+    <th>Geographic edge</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>South</td>
+    <td>-30.0</td>
+    <td>30°S</td>
+    </tr>
+    <tr>
+    <td>North</td>
+    <td>-18.0</td>
+    <td>18°S</td>
+    </tr>
+    <tr>
+    <td>West</td>
+    <td>-71.5</td>
+    <td>71.5°W</td>
+    </tr>
+    <tr>
+    <td>East</td>
+    <td>-67.0</td>
+    <td>67°W</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>The box covers the Chilean Atacama from the northern desert to
+    about 30°S and from the Pacific slope to the Andean front, including
+    the Salar de Atacama. The Antarctic Dry Valleys are another famous
+    control the science notes allow, and they were not used. June NDVI
+    is blank south of 60°S, so vegetation cannot be scored there.
+    Atacama has the three features this run actually scores.</p>
+    <p>Eligible cells inside the box: 1114. Eligible discovery cells
+    outside it: 404930.</p>
+    <h2 id="control-score">Control score</h2>
+    <p>The control score is the best eligible cell inside the box, from
+    the same function as the discovery cells. It is not a discovery
+    winner.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Item</th>
+    <th>Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>cell_id</td>
+    <td><code>-27.9_-68.9</code></td>
+    </tr>
+    <tr>
+    <td>latitude</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>longitude</td>
+    <td>-68.9</td>
+    </tr>
+    <tr>
+    <td>ndvi_median</td>
+    <td>0.00925</td>
+    </tr>
+    <tr>
+    <td>lst_night_median_k</td>
+    <td>254.45</td>
+    </tr>
+    <tr>
+    <td>precip_median_mm_hr</td>
+    <td>0.008</td>
+    </tr>
+    <tr>
+    <td>slope_median_deg</td>
+    <td>null</td>
+    </tr>
+    <tr>
+    <td>score</td>
+    <td>0.167981</td>
+    </tr>
+    <tr>
+    <td>features missing</td>
+    <td>slope_median_deg</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>The median score of the 1114 eligible cells in the box is
+    0.273354. That median is a summary of the same cell scores. It is
+    not a second formula. The row written to
+    <code>results/control.csv</code> is the best cell.</p>
+    <h2 id="ranking-meanings">Ranking meanings</h2>
+    <p><code>results/top5.csv</code> is the unfiltered published batch
+    ranking and contains the Greenland ice-sheet cluster. The map's
+    discovery ranking excludes the Atacama hold-out and the Greenland
+    cluster rectangle (70.5–78.9°N, 50.1–28.9°W), supported by the
+    June/August 2024 Worldview checks in
+    <code>notes/worldview-checks.md</code>; the five leading cells also
+    have individual source rows in <code>results/sources.csv</code>. It
+    answers which eligible cells remain for follow-up after those
+    exclusions; it does not identify the best overall candidate.
+    Kunlun's locked score is worse than the Vinchina control score.
+    <code>results/control.csv</code> is the best eligible cell inside
+    the Atacama box under the same formula.</p>
+    <h2 id="discovery-cells">Discovery cells</h2>
+    <p><code>results/top5.csv</code> is written by
+    <code>src/score.py</code> from the measurement table and the weights
+    file. These five rows are that file.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>rank</th>
+    <th>cell_id</th>
+    <th>lat</th>
+    <th>lon</th>
+    <th>NDVI</th>
+    <th>night LST (K)</th>
+    <th>precip (mm/hr)</th>
+    <th>score</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>1</td>
+    <td><code>73.5_-40.5</code></td>
+    <td>73.5</td>
+    <td>-40.5</td>
+    <td>-0.032</td>
+    <td>252.94</td>
+    <td>0</td>
+    <td>0.162265</td>
+    </tr>
+    <tr>
+    <td>2</td>
+    <td><code>73.5_-40.7</code></td>
+    <td>73.5</td>
+    <td>-40.7</td>
+    <td>-0.03205</td>
+    <td>253.02</td>
+    <td>0</td>
+    <td>0.162595</td>
+    </tr>
+    <tr>
+    <td>3</td>
+    <td><code>73.9_-40.1</code></td>
+    <td>73.9</td>
+    <td>-40.1</td>
+    <td>-0.0324</td>
+    <td>253.13</td>
+    <td>0</td>
+    <td>0.163160</td>
+    </tr>
+    <tr>
+    <td>4</td>
+    <td><code>73.5_-40.9</code></td>
+    <td>73.5</td>
+    <td>-40.9</td>
+    <td>-0.0318</td>
+    <td>253.21</td>
+    <td>0</td>
+    <td>0.163229</td>
+    </tr>
+    <tr>
+    <td>5</td>
+    <td><code>74.1_-39.9</code></td>
+    <td>74.1</td>
+    <td>-39.9</td>
+    <td>-0.0352</td>
+    <td>252.88</td>
+    <td>0</td>
+    <td>0.163318</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>The five centers span latitude 73.5 to 74.1 and longitude -40.9
+    to -39.9.</p>
+    <p>Each of these rows is missing <code>slope_median_deg</code>. The
+    feature columns that were measured are filled from
+    <code>data/processed/features.csv</code>. The script does not edit
+    that table.</p>
+    <p>The best eligible discovery cell south of 60°N is
+    <code>35.3_81.1</code> at latitude 35.3, longitude 81.1, score
+    0.186845. That score is a worse partial match than the Atacama
+    control cell (0.167981). It is not one of the five discovery
+    ranks.</p>
+    <h2 id="worked-example-for-rank-1">Worked example for rank 1</h2>
+    <ul>
+    <li><code>ndvi_median</code>: raw distance 0.032 NDVI, divided by
+    0.8304 NDVI = 0.038536, times weight 1.</li>
+    <li><code>precip_median_mm_hr</code>: raw distance 0 mm/hr, divided
+    by 0.296 mm/hr = 0.000000, times weight 1.</li>
+    <li><code>lst_night_median_k</code>: raw distance 38.64 kelvin,
+    divided by 86.2 kelvin = 0.448260, times weight 1.</li>
+    <li>Score = weighted mean = 0.162265 (denominator 3).</li>
+    </ul>
+    <h2 id="what-this-score-is-not">What this score is not</h2>
+    <p>The score is a partial match on measured Earth proxies. It is not
+    a probability of mission success. The dashboard reports success
+    probability as not estimable and evidence confidence as low: the
+    three scored features have no direct Moon/Mars referents, the
+    feature snapshot covers one month, and there are no mission outcome
+    cases for calibration. Gravity, vacuum, thin air, and radiation stay
+    out of scope. Slope stays out of the score until that column is
+    measured.</p>
+    <p>To estimate mission success probability credibly, collect
+    repeated seasonal measurements, direct target measurements for
+    relevant hazards, and labeled outcomes from representative rover
+    tasks. Define task success and failure before fitting a model; train
+    and calibrate on held-out missions or trials; report calibration
+    error and uncertainty intervals; and retain separate subsystem gates
+    for power, thermal, communications, mobility, and crew safety. Until
+    then, a numeric success probability would be fabricated.</p>
+    <p>Rerun with <code>python src/score.py</code> after any edit to
+    <code>notes/weights.json</code>.</p>
+  </main>
+</body>
+</html>

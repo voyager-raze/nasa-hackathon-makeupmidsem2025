@@ -1,0 +1,114 @@
+:root {
+  color-scheme: light;
+  --page: #f4f6f8;
+  --paper: #fff;
+  --ink: #1c2430;
+  --muted: #5e6a78;
+  --line: #e4e8ee;
+  --blue: #1d6fdb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.6 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.evidence-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+
+a { color: var(--blue); }
+
+.evidence-nav a { font-weight: 600; text-decoration: none; }
+.evidence-nav a:hover { text-decoration: underline; }
+
+main {
+  padding: clamp(20px, 4vw, 42px);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 2px 12px rgb(28 36 48 / 5%);
+}
+
+h1, h2, h3, h4 {
+  color: var(--ink);
+  line-height: 1.25;
+}
+
+h1 { margin-top: 0; font-size: clamp(2rem, 4vw, 2.7rem); }
+h2 { margin-top: 1.8em; padding-bottom: 0.25em; border-bottom: 1px solid var(--line); }
+h3 { margin-top: 1.5em; }
+
+p, ul, ol, blockquote, pre { margin: 0.8em 0; }
+
+table {
+  width: 100%;
+  margin: 1em 0;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+
+th, td {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th { background: #f2f6fb; }
+tr:nth-child(even) td { background: #fafbfd; }
+
+code, pre {
+  font-family: "Cascadia Mono", Consolas, monospace;
+}
+
+code {
+  padding: 0.12em 0.3em;
+  border-radius: 4px;
+  background: #f1f3f5;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  overflow-x: auto;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f7f8fa;
+}
+
+pre code { padding: 0; background: transparent; }
+
+blockquote {
+  padding: 8px 16px;
+  border-left: 3px solid var(--blue);
+  color: var(--muted);
+}
+
+img { max-width: 100%; height: auto; }
+
+@media (max-width: 640px) {
+  body { padding: 12px; font-size: 15px; }
+  .evidence-nav { gap: 8px 12px; }
+  main { padding: 18px; }
+}
+
+@media print {
+  body { max-width: none; padding: 0; background: white; }
+  .evidence-nav { display: none; }
+  main { padding: 0; border: 0; box-shadow: none; }
+}

@@ -28,7 +28,7 @@ Use another name if the team prefers one. Keep it short.
 
 Paste and edit the brackets.
 
-> Partial Match compares one Artemis south-pole ridge, [Moon site], and one Mars region, [Mars site], with Earth sites scored from open satellite data. It reports [Earth site A] as a partial analog and compares it with [famous site B] using the same measurements. The project states what matches, where Earth cannot stand in for gravity, vacuum, air, and radiation, and what a field team could rehearse before flight.
+> Mission Analog Readiness screens June 2024 Earth observations against the Shackleton–de Gerlache connecting ridge and documents the Arcadia Planitia ground-ice target. Among two compared Earth patches, Vinchina has the lower three-proxy score and a median slope inside the lunar target band; Kunlun is a lower-slope comparison. These are candidates for a terrain-only mobility study, not validated Moon or Mars analogs. The project identifies the missing Earth ice comparison and states where Earth cannot stand in for otherworldly conditions.
 
 ### Project demo
 
@@ -45,8 +45,8 @@ Cover these points in order:
 1. The challenge question you answered: finding Earth rehearsals for a Moon base site and a Mars site, not a place that looks red or grey.
 2. The two targets, with coordinates.
 3. The Earth measurements and the datasets.
-4. Site A and Site B, with the match and the break.
-5. The rehearsal a team would run at Site A.
+4. Site A and Site B, separating the three-proxy score from the later direct slope check.
+5. The paired rover-mobility trial proposed for Vinchina and Kunlun, labeled as not yet run.
 6. How to rerun the screen, or how the manual comparison was done.
 7. What you would add with another week.
 
@@ -83,18 +83,19 @@ One idea per slide. Large type. A figure with a caption beats a paragraph.
 
 | Slide | Title | What must be on it |
 | --- | --- | --- |
-| 1 | Partial Match | Team name, Delhi, challenge name |
-| 2 | The problem | A base site is chosen for specific traits. Earth can rehearse some of them. A look-alike photo is not a result |
-| 3 | Our targets | Named Moon ridge and named Mars site, with one image each and the trait you chose to match |
-| 4 | Data and method | The datasets, the weights, and the sentence “missing data was left blank” |
-| 5 | What we found | Site A versus Site B, with two or three numbers and units |
-| 6 | Where the analogy breaks | Gravity, air, radiation, and the worst scientific gap in your own table. Then one sentence on the rehearsal Site A is good for |
-| 7 | Limits and links | Confidence, what the grid size cannot see, repo link, data links |
+| 1 | Mission Analog Readiness | Team name, Delhi, challenge name |
+| 2 | The decision | State the mission question and that this is a field-study prescreen, not a flight-ready analog |
+| 3 | Two targets, two evidence levels | Name the Moon ridge and Mars ground-ice target; distinguish published Mars target evidence from project measurements |
+| 4 | A screen, then a direct check | Name the three proxy datasets, explain that slope is not in the score, and compare separately with the lunar slope band |
+| 5 | The result changes the recommendation | Compare the scores and measured slopes; clearly name the stronger candidate and the contrasting site |
+| 6 | A testable next step | Give a paired mobility-trial design, measurable outcomes, and state that it has not been run |
+| 7 | What is still unknown | Confidence, cell scale, missing Earth ice comparison, links, and repository |
 
 ## Private-window test
 
 Do this after submit, and again if you change a link.
 
+- [ ] A fresh private/incognito visit opens the dashboard’s 90-second review; after dismissing it, the **90-sec review** button reopens it
 - [ ] Project page loads while logged out
 - [ ] Demo link loads without a request for access
 - [ ] Final project link loads without a request for access

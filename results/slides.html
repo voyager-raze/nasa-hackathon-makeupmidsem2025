@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Partial Match — seven slides</title>
+  <title>Mission Analog Readiness — seven slides</title>
   <style>
     :root {
       --bg: #10141c;
@@ -94,98 +94,80 @@
   <div class="deck">
     <section class="slide slide-1 active" id="s1">
       <p class="kicker">Slide 1</p>
-      <h1>Partial Match</h1>
-      <p>Team Mid-Sem Make Up. Local event: Delhi, NASA Space Apps 2026.</p>
+      <h1>Mission Analog Readiness</h1>
+      <p>Partial Match: a transparent shortlist for rover mobility rehearsals.</p>
+      <p>Team Mid-Sem Make Up · Delhi · NASA Space Apps 2026.</p>
       <p>Challenge: Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars.</p>
     </section>
 
     <section class="slide slide-2" id="s2">
       <p class="kicker">Slide 2</p>
-      <h2>The problem</h2>
-      <p>A base site is chosen for specific traits.</p>
-      <p>A look-alike photo is not a result.</p>
-      <p>Earth can rehearse some of those traits.</p>
+      <h2>The decision</h2>
+      <p>Which Earth patch can rehearse which mission task?</p>
+      <p>A look-alike image is not evidence. We screened Earth data, checked terrain against a named lunar target, and separated what the measurements can and cannot support.</p>
+      <p>Use the result to plan a field study—not to claim a flight-ready analog.</p>
     </section>
 
     <section class="slide" id="s3">
       <p class="kicker">Slide 3</p>
-      <h2>Our targets</h2>
-      <p>Moon: Shackleton–de Gerlache connecting ridge. Center 89.4632°S, 137.4771°W (222.5229°E).</p>
-      <p>The Moon trait is the ridge or rim operations analog: slope, barren ground, cold, and the nearby cold-trap limit.</p>
-      <p>Locked slope band 8.0-16.7 degrees, median 12.3 degrees, on the 16 km LOLA Site01 tile.</p>
-      <p>Mars: Arcadia Planitia, the terraced crater Badger, 46.581°N, 194.85°E. Locked case: ground ice. Those coordinates are the locked target. No Badger ice, mineral, or dust measurement is in the source table.</p>
-      <p>No second planetary target.</p>
+      <h2>Two targets, two evidence levels</h2>
+      <p><strong>Moon:</strong> Shackleton–de Gerlache connecting ridge, 89.4632°S, 137.4771°W. LOLA reports a 16 km tile slope IQR of <strong>8.0–16.7°</strong> (median <strong>12.3°</strong>).</p>
+      <p><strong>Mars:</strong> terraced crater Badger, Arcadia Planitia, 46.581°N, 194.85°E. Bramson et al. (2015) interpret radar evidence as a decameters-thick, mostly excess-water-ice layer at a flat terrace 43 m deep. This is published target evidence, not a local ice map processed by our project.</p>
+      <p>The Earth-side ice comparison is still missing.</p>
     </section>
 
     <section class="slide slide-4" id="s4">
       <p class="kicker">Slide 4</p>
-      <h2>Data and method</h2>
-      <p>NASA Earthdata Search, https://search.earthdata.nasa.gov/, supplied the June 2024 layers: MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg CMG, 061; MODIS/Terra Land Surface Temperature/Emissivity Monthly L3 Global 0.05Deg CMG, 061; and GPM IMERG Final Precipitation L3 1 month 0.1 degree, 07 V07B.</p>
-      <p>NASA Worldview, https://worldview.earthdata.nasa.gov/, supplied the surface classes. Patch slopes used Copernicus DEM, GLO-30 Public, 2021 release. The lunar slope used LOLA 5 m/pixel slope, Site01 connecting ridge.</p>
-      <p>Default weights: slope, vegetation, precipitation, and night temperature each have weight 1.0. A larger weight pulls the weighted distance toward that feature. A lower score is a closer partial match. Slope was null in the published scores, so those scores used vegetation, precipitation, and night temperature.</p>
-      <p>Missing data was left blank.</p>
+      <h2>A screen, then a direct check</h2>
+      <p>We screened 0.2° Earth cells with June 2024 MODIS NDVI, MODIS night land-surface temperature, and GPM monthly precipitation.</p>
+      <p>Equal-weight, normalized distance uses three <strong>Earth-side proxies</strong>: NDVI near zero, precipitation near zero, and night temperature above a 214.3 K cold-tail threshold. A lower score means closer to these proxies—not closer to the Moon or Mars overall.</p>
+      <p>Global slope was missing, so slope is <strong>not in the score</strong>. We later measured the two site slopes from Copernicus DEM and compared them directly with the LOLA band. Missing data stayed missing.</p>
     </section>
 
     <section class="slide" id="s5">
       <p class="kicker">Slide 5</p>
-      <h2>What we found</h2>
-      <p>Site A is the Kunlun Mountains, Rutog County, Ngari Prefecture, Tibet Autonomous Region, China. 35.3°N, 81.1°E.</p>
-      <p>Site B is Vinchina, Departamento Vinchina, La Rioja, Argentina. 27.9°S, 68.9°W. Famous control: the best cell inside the Atacama hold-out, scored with the same weights.</p>
-      <p>Site B at 0.167981 is a closer partial match than Site A at 0.186845. Both scores used June 2024 vegetation, precipitation, and night temperature. Slope was null in both scores.</p>
+      <h2>The result changes the recommendation</h2>
+      <p>Site A: Kunlun Mountains, 35.3°N, 81.1°E. Site B: Vinchina, 27.9°S, 68.9°W—the best cell inside the Atacama-region hold-out, used as a comparator.</p>
       <table>
         <thead>
           <tr>
             <th>Measurement</th>
-            <th>Kunlun (Site A)</th>
-            <th>Vinchina (Site B)</th>
+            <th>Kunlun</th>
+            <th>Vinchina</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Vegetation</td>
-            <td>-0.01995 NDVI</td>
-            <td>0.00925 NDVI</td>
+            <td>Three-proxy score (lower is closer)</td>
+            <td>0.186845</td>
+            <td><strong>0.167981</strong></td>
           </tr>
           <tr>
-            <td>Precipitation</td>
-            <td>0.006 mm/hr</td>
-            <td>0.008 mm/hr</td>
-          </tr>
-          <tr>
-            <td>Night land-surface temperature</td>
-            <td>258.8 kelvin</td>
-            <td>254.45 kelvin</td>
+            <td>Median slope vs Moon IQR 8.0–16.7°</td>
+            <td>7.08° — outside</td>
+            <td><strong>9.48° — inside</strong></td>
           </tr>
         </tbody>
       </table>
+      <p>The proxy score and the independent slope check both favor Vinchina among these two. Study it first for a terrain-only mobility rehearsal; keep Kunlun as a lower-slope comparison. Neither is a validated analog.</p>
     </section>
 
     <section class="slide slide-6" id="s6">
       <p class="kicker">Slide 6</p>
-      <h2>Where the analogy breaks</h2>
-      <p>Gravity, vacuum or thin carbon-dioxide air, and radiation are limits. They are not rows in the source table.</p>
-      <p>Gravity on the Moon is about one-sixth of Earth. Gravity on Mars is about three-eighths of Earth. Both patches are full-Earth-gravity outdoor ground.</p>
-      <p>The Moon is a vacuum. Mars has thin carbon-dioxide air, roughly one percent of Earth’s surface pressure. Both patches have Earth’s air.</p>
-      <p>Air and the magnetic field block most radiation at Earth’s surface, so an outdoor test here does not qualify electronics or crews for the surface dose on the Moon or Mars.</p>
-      <p>The largest gap is an ice or permafrost map. None was opened. No Diviner temperature is in the source table. Kunlun’s median slope is 7.08 degrees, outside the locked band of 8.0-16.7 degrees. Vinchina’s median slope is 9.48 degrees, inside that band. Both slope rows were measured after the score.</p>
-      <p>The rehearsal is one rover drive on the measured median slope of 7.08 degrees, across the patch whose median NDVI is -0.01995, logging wheel current.</p>
-      <p>Vacuum, radiation, and suit tests stay in a lab.</p>
+      <h2>A testable next step</h2>
+      <p><strong>Question:</strong> how does rover mobility effort compare across these two candidate patches?</p>
+      <p>After route-scale terrain and access checks, run matched-length traverses with the same rover setup, payload, and speed. Record local slope and surface material; measure wheel energy per distance, slip, and interruptions over repeated runs. Site differences would not isolate slope as the cause.</p>
+      <p>NASA context, not a site forecast: Curiosity completed 622/738 attempted drives (84.3%; 95% Wilson interval 81.5–86.7%). The proposed site trial measures terrain-linked effort, not mission success.</p>
+      <p>This is a test plan, not a completed field trial. Access, safety, and logistics have not been assessed. Earth cannot reproduce lunar/Martian gravity, vacuum or thin air, radiation, or a permanently shadowed lunar thermal environment.</p>
     </section>
 
     <section class="slide slide-7 links" id="s7">
       <p class="kicker">Slide 7</p>
-      <h2>Limits and links</h2>
-      <p>Confidence is low. The largest missing dataset is an ice or permafrost map. None was opened.</p>
-      <p>The grid cell is 0.2° by 0.2°: 22.3 km north-south, and east-west 22.3 km times the cosine of latitude, about 22.3 km at the equator and about 11.1 km at 60° latitude.</p>
-      <p>The grid cannot see a boulder, a narrow rim, or a single drill site inside a 10 to 50 km cell.</p>
-      <p>Repository: REPO_URL_HERE</p>
-      <p>Data: https://search.earthdata.nasa.gov/ and https://worldview.earthdata.nasa.gov/</p>
-      <p>https://doi.org/10.5067/MODIS/MOD13C2.061</p>
-      <p>https://doi.org/10.5067/MODIS/MOD11C3.061</p>
-      <p>https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07</p>
-      <p>https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_slp.tif</p>
-      <p>https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/Copernicus_DSM_COG_10_N35_00_E081_00_DEM/Copernicus_DSM_COG_10_N35_00_E081_00_DEM.tif</p>
-      <p>https://copernicus-dem-30m.s3.eu-central-1.amazonaws.com/Copernicus_DSM_COG_10_S28_00_W069_00_DEM/Copernicus_DSM_COG_10_S28_00_W069_00_DEM.tif</p>
+      <h2>What is still unknown</h2>
+      <p>Low confidence: the climate screen is one month; none of its three proxies has a direct planetary referent; no Earth ice/permafrost layer was used; and the 0.2° cells are too coarse for a route, boulder, or drill site. No Mars Earth analog is claimed.</p>
+      <p>Open the <a href="../web/index.html">90-second review guide</a> on first dashboard visit. Read the <a href="RESULTS.html">full dossier</a>, <a href="score-notes.html">method</a>, <a href="../notes/data-log.html">data log</a>, and <a href="../notes/credibility.html">validation</a>.</p>
+      <p><strong>Data:</strong> <a href="https://doi.org/10.5067/MODIS/MOD13C2.061">MODIS NDVI</a> · <a href="https://doi.org/10.5067/MODIS/MOD11C3.061">MODIS LST</a> · <a href="https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07">GPM IMERG</a> · <a href="https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_slp.tif">LOLA slope</a> · <a href="https://doi.org/10.1002/2015GL064844">Bramson et al. (2015)</a> · <a href="https://ntrs.nasa.gov/citations/20220000780">NASA Curiosity drive report</a></p>
+      <p><strong>Repository:</strong> <a href="https://github.com/voyager-raze/nasa-hackathon-makeupmidsem2025">voyager-raze/nasa-hackathon-makeupmidsem2025</a></p>
     </section>
   </div>
   <nav>

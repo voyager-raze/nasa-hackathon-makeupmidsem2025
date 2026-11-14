@@ -41,4 +41,9 @@ __pycache__/
 .venv/
 venv/
 
+# Generated multi-month grids; rebuild from the logged raw inputs.
+data/processed/monthly/
+data/processed/climatology/
+results/climatology/**/scores.csv.gz
+
 docs/master-prompt-nasa-grade-upgrade.md

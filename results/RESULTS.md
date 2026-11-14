@@ -1,4 +1,4 @@
-# Partial Match
+# Mission Analog Readiness
 
 Team Mid-Sem Make Up, Delhi. Earth sites scored against the Shackleton–de Gerlache connecting ridge, with Arcadia Planitia (Badger) as the locked ground-ice case on Mars.
 
@@ -6,11 +6,17 @@ A similarity score is a partial match on the measured features, not a probabilit
 
 The lunar slope rows are the locked Site01 tile: interquartile range 8.0-16.7 degrees, median 12.3 degrees, patch longitude -137.4771, patch latitude -89.4632, patch size 16 km (LOLA 5 m/pixel slope, Site01 connecting ridge).
 
+## Decision in brief
+
+Among the two compared patches, Vinchina is the stronger candidate for a **terrain-only mobility study**: its three-proxy score is lower (0.167981 vs. 0.186845), and its later-measured median slope (9.48 degrees) lies inside the lunar 8.0-16.7 degree IQR. Kunlun's 7.08-degree median is below the band. Keep Kunlun as a contrasting lower-slope case; do not describe either site as a validated analog.
+
+The score uses only June 2024 NDVI, precipitation, and night surface temperature. None has a direct Moon or Mars referent in the cited source table, and global slope was null, so the slope comparison is separate. This does not turn the proxy score into a mission suitability or success measure. The proposed paired rover trial has not been run; access, safety, and logistics have not been assessed.
+
 ## Site A — Kunlun Mountains
 
 ### Where it is
 
-Kunlun Mountains, Rutog County, Ngari Prefecture, Tibet Autonomous Region, China. Less-famous site kept after the Worldview rejections. Patch center latitude 35.3, longitude 81.1. Patch size 0.2 deg x 0.2 deg. Cell `35.3_81.1`. Median elevation 6120.8 m (Copernicus DEM, GLO-30 Public, 2021 release).
+Kunlun Mountains, Rutog County, Ngari Prefecture, Tibet Autonomous Region, China. Global-screen discovery candidate kept after the Worldview rejections. Patch center latitude 35.3, longitude 81.1. Patch size 0.2 deg x 0.2 deg. Cell `35.3_81.1`. Median elevation 6120.8 m (Copernicus DEM, GLO-30 Public, 2021 release).
 
 On 2024-06-15, NASA Worldview Corrected Reflectance (True Color), Terra / MODIS, v6.1 STD classed this patch as bare ground with ridgeline snow. The Kunlun Mountains label was read on 2024-09-20 in that layer. The row is a surface class.
 
@@ -48,19 +54,19 @@ No ice or permafrost row is in `results/sources.csv`. Ridgeline snow in the Worl
 
 ### How a mission would use it
 
-The rehearsal is one rover drive on the measured median slope of 7.08 degrees, across the 0.2 deg x 0.2 deg patch whose median NDVI is -0.01995, logging wheel current. The drive uses the slope that was measured, outside the locked band of 8.0-16.7 degrees. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
+Use Kunlun as the lower-slope site in a proposed comparison with Vinchina. After route-scale terrain, surface-material, access, and safety checks, run matched-length traverses with the same rover setup, payload, and speed. Record local slope and material; log wheel energy per distance, slip, and interruptions over repeated runs. Differences would be site-specific, not a pure slope effect. This is a proposal, not a completed field trial. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
 
 ### Confidence
 
-Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score also omitted slope, and the slope measured later falls outside the lunar band. Ice is unmeasured, so this site stays at low confidence.
+Low. The published score omitted slope, and the later-measured median falls below the lunar band. No Earth ice or permafrost layer was used, so this site is not an ice-sampling analog.
 
-The credibility pack is [notes/credibility.md](../notes/credibility.md), [notes/factor-coverage.md](../notes/factor-coverage.md), and [notes/sensitivity.md](../notes/sensitivity.md).
+The credibility pack is [notes/credibility.md](../notes/credibility.html), [notes/factor-coverage.md](../notes/factor-coverage.md), and [notes/sensitivity.md](../notes/sensitivity.md).
 
 ## Site B — Vinchina
 
 ### Where it is
 
-Vinchina, Departamento Vinchina, La Rioja, Argentina. Famous control: the best cell inside the Atacama hold-out, scored with the same weights. The cell center is on the Argentine side of the Andean front. Patch center latitude -27.9, longitude -68.9. Patch size 0.2 deg x 0.2 deg. Cell `-27.9_-68.9`. Median elevation 5330.7 m (Copernicus DEM, GLO-30 Public, 2021 release).
+Vinchina, Departamento Vinchina, La Rioja, Argentina. Hold-out comparator: the best eligible cell inside the defined Atacama-region box, scored with the same weights. The cell center is on the Argentine side of the Andean front. Patch center latitude -27.9, longitude -68.9. Patch size 0.2 deg x 0.2 deg. Cell `-27.9_-68.9`. Median elevation 5330.7 m (Copernicus DEM, GLO-30 Public, 2021 release).
 
 On 2024-06-15 the same Worldview layer classed this patch as arid mountains. A closer look on 2024-11-15 in that layer showed bare mountains and small snow patches. The row is a surface class.
 
@@ -94,19 +100,19 @@ Median elevation 5330.7 m has no lunar or Martian elevation in `results/sources.
 
 ### How a mission would use it
 
-The control comparison supports one rover drive on the measured median slope of 9.48 degrees, inside the locked band of 8.0-16.7 degrees, on the patch whose median NDVI is 0.00925. That drive is the comparison for the Kunlun rehearsal. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
+Use Vinchina as the in-band site in the same proposed comparison. Measure the same rover outcomes and route context as at Kunlun. The two-site comparison could inform a field-rehearsal choice, but would not isolate slope as the cause without route-level controls. No result exists before field validation. Access, safety, and logistics have not been assessed. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
 
 ### Confidence
 
-Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score omitted slope. The slope measured later, 9.48 degrees, does fall inside 8.0-16.7 degrees, and that comparison is reported above as its own row. Ice is unmeasured, so this site stays at low confidence.
+Low. The 9.48-degree median is inside the lunar slope band, but it was measured after and is separate from the published score. No Earth ice or permafrost layer was used, so this site is not an ice-sampling analog.
 
-The credibility pack is [notes/credibility.md](../notes/credibility.md), [notes/factor-coverage.md](../notes/factor-coverage.md), and [notes/sensitivity.md](../notes/sensitivity.md).
+The credibility pack is [notes/credibility.md](../notes/credibility.html), [notes/factor-coverage.md](../notes/factor-coverage.md), and [notes/sensitivity.md](../notes/sensitivity.md).
 
 ## Mars
 
-The case locked in `notes/targets.md` is ground ice. The region is Arcadia Planitia, the terraced crater Badger. No second Mars region was added.
+The case locked in `notes/targets.md` is ground ice. The region is Arcadia Planitia, the terraced crater Badger. No second Mars region was added. Bramson et al. (2015) used CTX imagery and SHARAD radargrams, checked against MOLA-based clutter simulations, and inferred a decameters-thick layer that is mostly excess water ice at a flat terrace 43 m deep ([DOI](https://doi.org/10.1002/2015GL064844)). This is published target evidence; this project did not retrieve or process a Badger ice raster.
 
-Ground ice, in this dossier, uses cold and barren ground. The Earth rows that speak to that case are the night temperatures and the vegetation index already cited: 258.8 kelvin and NDVI -0.01995 at Kunlun, and 254.45 kelvin and NDVI 0.00925 at Vinchina. No Mars temperature and no Mars vegetation index are in `results/sources.csv`, so those Earth numbers stand alone. No ice or permafrost row exists in `results/sources.csv`. The ice link is untested.
+The Earth-side cold and vegetation proxies are 258.8 kelvin and NDVI -0.01995 at Kunlun, and 254.45 kelvin and NDVI 0.00925 at Vinchina. No Mars temperature or vegetation value is in `results/sources.csv`, so these Earth values stand alone. No Earth ice or permafrost layer was used; therefore, no Mars Earth analog is claimed and the Earth ice comparison remains open.
 
 ## Source rows behind the scores
 

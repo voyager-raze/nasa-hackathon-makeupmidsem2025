@@ -421,14 +421,16 @@ def page_html(
       <p class="pm-sentence">Evidence-based analog screening for rover rehearsal sites.</p>
       <p class="pm-quiet">Site-specific mission probability is not supported by these Earth analog features.</p>
       <p class="pm-quiet">June 2024 snapshot · 0/3 scored features have direct Moon or Mars referents · low evidence grade</p>
+      <p class="pm-quiet">MOD11 quality flags were not additional filters.</p>
       <p id="pm-check">Reading the embedded table.</p>
     </div>
     <nav class="pm-links" aria-label="Evidence and method">
-      <a href="../results/score-notes.md">Method</a>
-      <a href="../notes/data-log.md">Data log</a>
-      <a href="../notes/credibility.md">Validation</a>
+      <a href="../results/RESULTS.html">Dossiers</a>
+      <a href="../results/score-notes.html">Method</a>
+      <a href="../notes/data-log.html">Data log</a>
+      <a href="../notes/credibility.html">Validation</a>
     </nav>
-    <button type="button" id="pm-guide" class="pm-btn">Guide</button>
+    <button type="button" id="pm-guide" class="pm-btn">90-sec review</button>
   </header>
   <div class="pm-map-cell">
     <div id="pm-map"></div>
@@ -489,7 +491,7 @@ def page_html(
         <span class="pm-kicker">Published {a_score}</span>
       </button>
       <button type="button" id="pm-jump-b" class="pm-card pm-stat pm-site-b">
-        <span class="pm-kicker">Site B · control · {html.escape(site_b["country"])}</span>
+        <span class="pm-kicker">Site B · hold-out comparator · {html.escape(site_b["country"])}</span>
         <strong>{html.escape(site_b["name"])}</strong>
         <span class="pm-coord">{html.escape(site_b["cell_id"])}</span>
         <span id="pm-site-b-score" class="pm-stat-score">—</span>
@@ -1303,11 +1305,11 @@ function bindChrome() {
 
 function setupTour() {
   const steps = [
-    { sel: ".pm-sentence", title: "Probability and reference", body: "The NASA Curiosity percentage is an observed drive-completion rate with a Wilson interval. It is not a site-specific mission forecast. Candidate-level mission probability requires a mission definition and calibration data." },
-    { sel: ".pm-hud", title: "Move the map", body: "World, Rank 1, Site A, Site B, and Hold-out fly the map to that place." },
-    { sel: "#pm-selected", title: "Compare a cell", body: "The Earth column changes with the cell, and the Moon and Mars targets stay fixed." },
-    { sel: "#pm-ranks", title: "Discovery list", body: "These cells sit outside the Atacama box and outside the rejected Greenland ice sheet." },
-    { sel: "#pm-weights", title: "Weights", body: "Open Adjust weights to recompute the order, and a lower score is a closer partial match." }
+    { sel: ".pm-stats", title: "Start with the finding", body: "Among these two sites, Vinchina has the lower three-proxy score (0.167981 vs 0.186845) and its later-measured 9.48° median slope is inside the lunar 8.0–16.7° band. Kunlun's 7.08° slope is below it. Consider Vinchina for a terrain-only mobility study, subject to access and safety checks—not as a validated analog." },
+    { sel: "#pm-selected", title: "Check the evidence", body: "Only NDVI, precipitation, and night surface temperature were scored. They are one-month Earth proxies; none has a direct Moon or Mars referent in the source table. Pixel counts show support, not confidence in mission success." },
+    { sel: ".pm-moon", title: "Find the limits", body: "Slope is a later patch measurement, not part of either published score. Bramson et al. (2015) provide radar evidence for ground ice at the Mars target, but we used no Earth ice/permafrost layer, so no Earth ice analog is identified. Earth cannot reproduce lunar or Martian gravity, atmosphere, radiation, or a permanently shadowed lunar thermal environment." },
+    { sel: ".pm-links", title: "Trace the claims", body: "Open Dossiers for the full site comparison, Method for the formula, Data log for inputs, and Validation for what has—and has not—been checked." },
+    { sel: "#pm-ranks", title: "Explore if needed", body: "The project pairs a global screen with an Atacama-region hold-out comparator, a separate lunar-slope check, and a testable mobility-study proposal. The distance formula is conventional. Use the map to navigate evidence; changing weights does not validate a candidate." }
   ];
   const root = document.getElementById("pm-tour");
   const card = document.getElementById("pm-tour-card");
@@ -1372,7 +1374,7 @@ function setupTour() {
 
   function closeTour() {
     root.hidden = true;
-    try { localStorage.setItem("pm-tour-seen", "1"); } catch (error) { /* storage can be blocked */ }
+    try { localStorage.setItem("pm-review-guide-seen-v1", "1"); } catch (error) { /* storage can be blocked */ }
   }
 
   document.getElementById("pm-tour-next").addEventListener("click", () => {
@@ -1390,7 +1392,7 @@ function setupTour() {
     if (event.key === "ArrowLeft" && index > 0) show(index - 1);
   });
   let seen = false;
-  try { seen = localStorage.getItem("pm-tour-seen") === "1"; } catch (error) { seen = false; }
+  try { seen = localStorage.getItem("pm-review-guide-seen-v1") === "1"; } catch (error) { seen = false; }
   if (!seen) openTour();
 }
 
@@ -1454,6 +1456,7 @@ async function start() {
   }
   scores = new Float64Array(n);
   eligible = new Uint8Array(n);
+  selected = findCell(META.site_a.lat, META.site_a.lon);
   bindChrome();
   rerank();
   setupTour();

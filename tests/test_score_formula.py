@@ -5,6 +5,7 @@ The score is a partial match on measured features, not a probability of mission 
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,7 @@ import pytest
 import h5py
 from pyhdf.SD import SD, SDC
 
+from src import score as score_module
 from src.score import (
     FEATURE_ORDER,
     TARGETS_MD,
@@ -267,6 +269,7 @@ def test_rank_ties_resolve_by_latitude_then_longitude():
 
 def test_generated_dashboard_keeps_targets_gaps_and_custom_weights_visible():
     page = MAP_HTML.read_text(encoding="utf-8")
+    page_lower = page.lower()
     for required in (
         "Moon target",
         "Mars target · ground ice",
@@ -282,10 +285,38 @@ def test_generated_dashboard_keeps_targets_gaps_and_custom_weights_visible():
         "Physical limits:",
         "Customize score",
         "Reset defaults",
-        "../results/score-notes.md",
-        "../notes/data-log.md",
-        "../notes/credibility.md",
+        "../results/score-notes.html",
+        "../notes/data-log.html",
+        "../notes/credibility.html",
         "@media (min-width: 981px)",
     ):
-        assert required in page
+        assert required.lower() in page_lower
     assert "confidence %" not in page.lower()
+
+
+@pytest.mark.parametrize(
+    "invalid_weight", [-0.1, float("nan"), float("inf"), "not-a-number", None]
+)
+def test_load_weights_rejects_negative_nonfinite_and_non_numeric_values(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    invalid_weight: object,
+):
+    weights_path = tmp_path / "weights.json"
+    weights_path.write_text(
+        json.dumps(
+            {
+                "cold_tail_percentile": 10,
+                "distance_scale_percentile": 95,
+                "features": {"ndvi_median": {"weight": invalid_weight}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(score_module, "WEIGHTS_JSON", weights_path)
+
+    with pytest.raises(SystemExit):
+        score_module.load_weights()
+
+    assert "finite, non-negative number" in capsys.readouterr().err

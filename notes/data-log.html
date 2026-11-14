@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partial Match — Data log</title>
+  <link rel="stylesheet" href="../web/evidence.css">
+</head>
+<body>
+  <nav class="evidence-nav" aria-label="Evidence pages">
+    <a href="../web/index.html">Dashboard</a>
+    <a href="../results/RESULTS.html">Dossiers</a>
+    <a href="../results/score-notes.html">Method</a>
+    <a href="../notes/data-log.html">Data log</a>
+    <a href="../notes/credibility.html">Validation</a>
+  </nav>
+  <main>
+    <h1 id="data-log">Data log</h1>
+    <p>Coarse Earth layers for Partial Match. The June feature build now
+    includes MODIS daytime land-surface temperature and paired
+    day-minus-night range as descriptive columns. Neither enters the
+    published score, and the published scores and site choices are
+    unchanged.</p>
+    <p>The locked Mars case stays <strong>ground ice</strong>, Arcadia
+    Planitia, the terraced crater Badger. No second Mars search was
+    opened. No Mars ice raster was opened. The June MOD10CM snow granule
+    and the SWIM planetary applicability are documented below; no ice
+    value was added.</p>
+    <p>The three June 2024 granules were obtained through an authorized
+    NASA GESDISC DATA ARCHIVE session on 14 November 2026. No credential
+    is recorded in this repository.</p>
+    <p>June 2024 is one month, not a climate normal. June is summer in
+    the north and winter in the south. A later chat that needs a year
+    should download the other months of the same short name and add them
+    here. It must not treat this June granule as an annual value.</p>
+    <p>The July 2024 MOD13C2 attempt returned HTTP 401 at the protected
+    Earthdata granule URL below. Per the data plan, the 2024
+    month-by-month run stopped there; no later month was requested and
+    June remains a single-month measurement.</p>
+    <p><a
+    href="https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD13C2.061/MOD13C2.A2024183.061.2024228034735/MOD13C2.A2024183.061.2024228034735.hdf">https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD13C2.061/MOD13C2.A2024183.061.2024228034735/MOD13C2.A2024183.061.2024228034735.hdf</a></p>
+    <h2 id="multi-year-pipeline-status">Multi-year pipeline status</h2>
+    <p><code>src/build_features.py --year YYYY --month MM</code> now
+    builds a compressed, versioned monthly feature table after resolving
+    exactly one matching granule for each product. Its sidecar manifest
+    records SHA-256 hashes for the table and all three source granules,
+    and explicitly records that MOD13C2 VI and MOD11C3 QC flags are not
+    applied. <code>src/build_monthly_range.py</code> preflights the full
+    requested date range before processing any month, then builds
+    sequentially. The June 2024 table was rebuilt through this path and
+    exactly matches all 577134 rows and columns in the published
+    <code>data/processed/features.csv</code>; it is not a new
+    measurement.</p>
+    <p><code>src/build_climatology.py --start-year 2015 --end-year 2024</code>
+    requires 120 monthly tables and matching source manifests. It
+    computes day-weighted annual means, sample standard deviation across
+    valid annual means, average yearly monthly minima/maxima, and
+    month/year coverage. A cell needs at least 10 valid months in a year
+    and at least 8 valid years by default. A month contributes only when
+    at least 8 of 16 MODIS pixels or 2 of 4 IMERG pixels are valid for
+    that cell; the output records mean valid-pixel support. The
+    climatology manifest carries forward monthly-table hashes,
+    source-manifest hashes, and raw-granule hashes. A changed input
+    hash, unsupported manifest, or grid/row-order mismatch stops the
+    run.</p>
+    <p>The ten-year inventory was checked: <strong>119 of 120 monthly
+    feature tables are missing</strong>. Only June 2024 granules exist
+    locally; the July 2024 MOD13C2 request above previously returned
+    HTTP 401. The climatology and its separate score have not been
+    computed. Published scores, targets, weights, and rankings remain
+    unchanged. The decade method uses the same three Earth proxy
+    families; it adds seasonal/interannual context but does not add a
+    measured ice, dust, or global slope factor. MOD11 quality flags
+    remain unfiltered in this pipeline and must be addressed before
+    treating its thermal values as high-quality evidence.</p>
+    <p><code>.gitignore</code> ignores <code>*.hdf</code>,
+    <code>*.h5</code>, <code>*.hdf5</code>, and <code>*.he5</code>, so
+    these files stay on this machine and are not committed. The filename
+    in this log is the record.</p>
+    <h2 id="resources-tab-dataset-this-project-will-use">Resources-tab
+    dataset this project will use</h2>
+    <p>The project will actually use <strong>NASA Earthdata
+    Search</strong>, <a
+    href="https://search.earthdata.nasa.gov/">https://search.earthdata.nasa.gov/</a>,
+    to obtain the three coarse layers below. That portal is on the
+    challenge Resources tab. MODIS and GPM IMERG are the measurements
+    inside that portal. They do not replace it.</p>
+    <p>Moon Trek and Mars Trek were used only to lock the targets in the
+    previous chat. They are not the Earth-layer source.</p>
+    <h2 id="vegetation">Vegetation</h2>
+    <table>
+    <thead>
+    <tr>
+    <th>Item</th>
+    <th>Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Dataset</td>
+    <td>MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg
+    CMG</td>
+    </tr>
+    <tr>
+    <td>Short name</td>
+    <td><code>MOD13C2</code></td>
+    </tr>
+    <tr>
+    <td>Version</td>
+    <td>061</td>
+    </tr>
+    <tr>
+    <td>DOI</td>
+    <td><a
+    href="https://doi.org/10.5067/MODIS/MOD13C2.061">https://doi.org/10.5067/MODIS/MOD13C2.061</a></td>
+    </tr>
+    <tr>
+    <td>Date range</td>
+    <td>1–30 June 2024 (granule start day 2024153)</td>
+    </tr>
+    <tr>
+    <td>Quantity</td>
+    <td>Monthly NDVI. Science layer name in the HDF:
+    <code>CMG 0.05 Deg Monthly NDVI</code>. The same file also holds
+    EVI. Values are decoded using the layer's scale factor (10000),
+    <code>_FillValue</code>, and <code>valid_range</code>.</td>
+    </tr>
+    <tr>
+    <td>Resolution</td>
+    <td>0.05° CMG, 7200 columns by 3600 rows, about 5.6 km at the
+    equator. Coarse global grid. Not a 30 m world download. The next
+    chat can aggregate it toward a 10–50 km cell.</td>
+    </tr>
+    <tr>
+    <td>Search URL</td>
+    <td><a
+    href="https://search.earthdata.nasa.gov/search/granules?p=C2565788914-LPCLOUD">https://search.earthdata.nasa.gov/search/granules?p=C2565788914-LPCLOUD</a></td>
+    </tr>
+    <tr>
+    <td>Granule URL</td>
+    <td><a
+    href="https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD13C2.061/MOD13C2.A2024153.061.2024198104950/MOD13C2.A2024153.061.2024198104950.hdf">https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD13C2.061/MOD13C2.A2024153.061.2024198104950/MOD13C2.A2024153.061.2024198104950.hdf</a></td>
+    </tr>
+    <tr>
+    <td>Filename</td>
+    <td><code>data/raw/MOD13C2.A2024153.061.2024198104950.hdf</code></td>
+    </tr>
+    <tr>
+    <td>Size</td>
+    <td>105,705,498 bytes. HDF4 signature <code>0e031301</code>.</td>
+    </tr>
+    <tr>
+    <td>User guide</td>
+    <td><a
+    href="https://lpdaac.usgs.gov/documents/621/MOD13_User_Guide_V61.pdf">https://lpdaac.usgs.gov/documents/621/MOD13_User_Guide_V61.pdf</a></td>
+    </tr>
+    <tr>
+    <td>Status</td>
+    <td><strong>Download succeeded.</strong></td>
+    </tr>
+    </tbody>
+    </table>
+    <h2 id="land-surface-temperature">Land-surface temperature</h2>
+    <table>
+    <thead>
+    <tr>
+    <th>Item</th>
+    <th>Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Dataset</td>
+    <td>MODIS/Terra Land Surface Temperature/Emissivity Monthly L3
+    Global 0.05Deg CMG</td>
+    </tr>
+    <tr>
+    <td>Short name</td>
+    <td><code>MOD11C3</code></td>
+    </tr>
+    <tr>
+    <td>Version</td>
+    <td>061</td>
+    </tr>
+    <tr>
+    <td>DOI</td>
+    <td><a
+    href="https://doi.org/10.5067/MODIS/MOD11C3.061">https://doi.org/10.5067/MODIS/MOD11C3.061</a></td>
+    </tr>
+    <tr>
+    <td>Date range</td>
+    <td>1–30 June 2024 (granule start day 2024153)</td>
+    </tr>
+    <tr>
+    <td>Quantity</td>
+    <td>Monthly land-surface temperature. Science layers:
+    <code>LST_Day_CMG</code> and <code>LST_Night_CMG</code>. Both decode
+    as stored integer × <code>scale_factor</code> (0.02), with
+    <code>_FillValue</code> and layer <code>valid_range</code> applied.
+    <code>LST_Night_CMG</code> remains the only temperature score input.
+    <code>LST_Day_CMG</code> is descriptive. The per-cell day–night
+    range is the median of paired valid pixel differences
+    (<code>day - night</code>), also descriptive and not scored. Quality
+    layers <code>QC_Day</code> and <code>QC_Night</code> are present but
+    were not used as additional filters.</td>
+    </tr>
+    <tr>
+    <td>Resolution</td>
+    <td>0.05° CMG, 7200 columns by 3600 rows, about 5.6 km at the
+    equator. Coarse global grid. Not a 30 m world download.</td>
+    </tr>
+    <tr>
+    <td>Search URL</td>
+    <td><a
+    href="https://search.earthdata.nasa.gov/search/granules?p=C2565788897-LPCLOUD">https://search.earthdata.nasa.gov/search/granules?p=C2565788897-LPCLOUD</a></td>
+    </tr>
+    <tr>
+    <td>Granule URL</td>
+    <td><a
+    href="https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD11C3.061/MOD11C3.A2024153.061.2024187024328/MOD11C3.A2024153.061.2024187024328.hdf">https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/MOD11C3.061/MOD11C3.A2024153.061.2024187024328/MOD11C3.A2024153.061.2024187024328.hdf</a></td>
+    </tr>
+    <tr>
+    <td>Filename</td>
+    <td><code>data/raw/MOD11C3.A2024153.061.2024187024328.hdf</code></td>
+    </tr>
+    <tr>
+    <td>Size</td>
+    <td>72,523,792 bytes. HDF4 signature <code>0e031301</code>.</td>
+    </tr>
+    <tr>
+    <td>User guide</td>
+    <td><a
+    href="https://lpdaac.usgs.gov/documents/715/MOD11_User_Guide_V61.pdf">https://lpdaac.usgs.gov/documents/715/MOD11_User_Guide_V61.pdf</a></td>
+    </tr>
+    <tr>
+    <td>Status</td>
+    <td><strong>Download succeeded.</strong></td>
+    </tr>
+    </tbody>
+    </table>
+    <h2 id="precipitation">Precipitation</h2>
+    <table>
+    <thead>
+    <tr>
+    <th>Item</th>
+    <th>Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Dataset</td>
+    <td>GPM IMERG Final Precipitation L3 1 month 0.1 degree x 0.1
+    degree</td>
+    </tr>
+    <tr>
+    <td>Short name</td>
+    <td><code>GPM_3IMERGM</code></td>
+    </tr>
+    <tr>
+    <td>Version</td>
+    <td>07 (file is the current V07B run)</td>
+    </tr>
+    <tr>
+    <td>DOI</td>
+    <td><a
+    href="https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07">https://doi.org/10.5067/GPM/IMERG/3B-MONTH/07</a></td>
+    </tr>
+    <tr>
+    <td>Date range</td>
+    <td>1–30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Quantity</td>
+    <td>Dataset <code>precipitation</code>. Long name in the file:
+    “Merged microwave-infrared-gauge precipitation estimate.” Units
+    attribute: <code>mm/hr</code>. Grid header:
+    <code>TimeInterval=MONTH</code>,
+    <code>BinMethod=ARITHMETIC_MEAN</code>, so this is the monthly mean
+    rate, not a monthly millimetre total. Missing code on that field:
+    <code>-9999.9</code>.</td>
+    </tr>
+    <tr>
+    <td>Resolution</td>
+    <td>0.1° × 0.1° (<code>LatitudeResolution=0.1</code>,
+    <code>LongitudeResolution=0.1</code>), about 10 km at the equator.
+    This is the dryness layer.</td>
+    </tr>
+    <tr>
+    <td>Search URL</td>
+    <td><a
+    href="https://search.earthdata.nasa.gov/search/granules?p=C2723754851-GES_DISC">https://search.earthdata.nasa.gov/search/granules?p=C2723754851-GES_DISC</a></td>
+    </tr>
+    <tr>
+    <td>Granule URL</td>
+    <td><a
+    href="https://data.gesdisc.earthdata.nasa.gov/data/GPM_L3/GPM_3IMERGM.07/2024/3B-MO.MS.MRG.3IMERG.20240601-S000000-E235959.06.V07B.HDF5">https://data.gesdisc.earthdata.nasa.gov/data/GPM_L3/GPM_3IMERGM.07/2024/3B-MO.MS.MRG.3IMERG.20240601-S000000-E235959.06.V07B.HDF5</a></td>
+    </tr>
+    <tr>
+    <td>Filename</td>
+    <td><code>data/raw/3B-MO.MS.MRG.3IMERG.20240601-S000000-E235959.06.V07B.HDF5</code></td>
+    </tr>
+    <tr>
+    <td>Size</td>
+    <td>19,149,547 bytes. HDF5 signature <code>894844460d0a1a0a</code>.
+    Product version inside the file: V07B.</td>
+    </tr>
+    <tr>
+    <td>Documentation</td>
+    <td><a
+    href="https://arthurhou.pps.eosdis.nasa.gov/Documents/IMERG_TechnicalDocumentation_final.pdf">https://arthurhou.pps.eosdis.nasa.gov/Documents/IMERG_TechnicalDocumentation_final.pdf</a></td>
+    </tr>
+    <tr>
+    <td>Status</td>
+    <td><strong>Download succeeded.</strong></td>
+    </tr>
+    </tbody>
+    </table>
+    <h2 id="elevation">Elevation</h2>
+    <p>Global elevation was <strong>not</strong> downloaded. No global
+    SRTM tile and no global Copernicus DEM was requested. The two
+    shortlisted patch elevation and slope measurements come from a
+    separate Copernicus DEM GLO-30 source documented in
+    <code>results/sources.csv</code>.</p>
+    <p>On 15 November 2026, a coarse NOAA ETOPO2v2g 2-arc-minute grid
+    was attempted instead of a global 30 m DEM. The archive endpoint
+    returned HTTP 200 to a header request, but the full download timed
+    out after 300 seconds (<code>curl</code> exit 28) at 51,751,487 of
+    83,092,100 bytes. The incomplete archive was removed. No slope was
+    calculated, no slope values were written, and
+    <code>slope_median_deg</code> remains blank on the global grid. This
+    dataset attempt is stopped.</p>
+    <p>Download URL: <a
+    href="https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ETOPO2v2-2006/ETOPO2v2g/raw_binary/ETOPO2v2g_i2_LSB.zip">https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2/ETOPO2v2-2006/ETOPO2v2g/raw_binary/ETOPO2v2g_i2_LSB.zip</a></p>
+    <h2 id="snow-aerosol-and-mars-ice">Snow, aerosol, and Mars ice</h2>
+    <p>The June 2024 MOD10CM monthly snow-cover granule is listed in
+    CMR, but its data URL returned HTTP 401 on download. No file was
+    opened and no snow value was added.</p>
+    <ul>
+    <li>CMR collection: <a
+    href="https://cmr.earthdata.nasa.gov/search/collections.json?short_name=MOD10CM">https://cmr.earthdata.nasa.gov/search/collections.json?short_name=MOD10CM</a></li>
+    <li>Granule and failed download URL: <a
+    href="https://data.nsidc.earthdatacloud.nasa.gov/nsidc-cumulus-prod-protected/MODIS/MOD10CM/61/2024/06/01/MOD10CM.A2024153.061.2024187024104.hdf">https://data.nsidc.earthdatacloud.nasa.gov/nsidc-cumulus-prod-protected/MODIS/MOD10CM/61/2024/06/01/MOD10CM.A2024153.061.2024187024104.hdf</a></li>
+    <li>Dataset DOI: <a
+    href="https://doi.org/10.5067/MODIS/MOD10CM.061">https://doi.org/10.5067/MODIS/MOD10CM.061</a>
+    Status: <strong>HTTP 401; stopped.</strong></li>
+    </ul>
+    <p>The June 2024 MOD08_M3 aerosol granule is listed in CMR. Its HTTP
+    header request redirected successfully, but the data download
+    returned HTTP 401. No file was opened and no aerosol value was
+    added.</p>
+    <ul>
+    <li>CMR granule search: <a
+    href="https://cmr.earthdata.nasa.gov/search/granules.json?short_name=MOD08_M3&amp;version=6.1&amp;temporal=2024-06-01T00%3A00%3A01Z%2C2024-07-01T00%3A00%3A00Z&amp;page_size=1">https://cmr.earthdata.nasa.gov/search/granules.json?short_name=MOD08_M3&amp;version=6.1&amp;temporal=2024-06-01T00%3A00%3A01Z%2C2024-07-01T00%3A00%3A00Z&amp;page_size=1</a></li>
+    <li>Granule and failed download URL: <a
+    href="https://data.laadsdaac.earthdatacloud.nasa.gov/prod-lads/MOD08_M3/MOD08_M3.A2024153.061.2024187025131.hdf">https://data.laadsdaac.earthdatacloud.nasa.gov/prod-lads/MOD08_M3/MOD08_M3.A2024153.061.2024187025131.hdf</a></li>
+    <li>Dataset DOI: <a
+    href="https://doi.org/10.5067/MODIS/MOD08_M3.061">https://doi.org/10.5067/MODIS/MOD08_M3.061</a>
+    Status: <strong>HTTP 401; stopped.</strong></li>
+    </ul>
+    <p>The USGS SWIM project is a lunar south-pole water-ice mapping
+    product. It is not a Mars dataset and cannot supply an
+    ice-consistency value for the Mars coordinates of Badger. The
+    project page was not readable from this session because it returned
+    an AWS WAF challenge; no SWIM file or value was opened. Badger's
+    minerals, ice-map raster, and dust index remain blank.</p>
+    <p>SRTM GL1, short name <code>SRTMGL1</code>, is for shortlisted
+    patches only, in a later chat. SRTM covers roughly 60°N to 56°S. It
+    does not cover Antarctica or the far north. A site outside that band
+    needs a different elevation model. Do not assume worldwide SRTM.</p>
+    <h2 id="not-downloaded">Not downloaded</h2>
+    <ul>
+    <li>EMIT, CRISM, and any global mineral map. A mineral sentence is
+    optional and only for a finalist patch later.</li>
+    <li>HLS Landsat (<code>HLSL30</code>) and Sentinel-2
+    (<code>HLSS30</code>). Those are the zoom lens, not this
+    screen.</li>
+    <li>MOD10CM snow cover was attempted, but the granule returned HTTP
+    401; no snow value was read. No static permafrost extent was opened.
+    No SWIM raster was opened, and a lunar product is not a Mars ice
+    measurement.</li>
+    <li>Browse JPEGs. They are pictures, not measurements.</li>
+    </ul>
+  </main>
+</body>
+</html>

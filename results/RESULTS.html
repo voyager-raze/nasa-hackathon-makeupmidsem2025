@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partial Match — Dossiers</title>
+  <link rel="stylesheet" href="../web/evidence.css">
+</head>
+<body>
+  <nav class="evidence-nav" aria-label="Evidence pages">
+    <a href="../web/index.html">Dashboard</a>
+    <a href="../results/RESULTS.html">Dossiers</a>
+    <a href="../results/score-notes.html">Method</a>
+    <a href="../notes/data-log.html">Data log</a>
+    <a href="../notes/credibility.html">Validation</a>
+  </nav>
+  <main>
+    <h1 id="mission-analog-readiness">Mission Analog Readiness</h1>
+    <p>Team Mid-Sem Make Up, Delhi. Earth sites scored against the
+    Shackleton–de Gerlache connecting ridge, with Arcadia Planitia
+    (Badger) as the locked ground-ice case on Mars.</p>
+    <p>A similarity score is a partial match on the measured features,
+    not a probability of mission success. A lower score is a closer
+    partial match. The published scores used <code>ndvi_median</code>,
+    <code>precip_median_mm_hr</code>, and
+    <code>lst_night_median_k</code>. <code>slope_median_deg</code> was
+    null in those scores. Gravity, vacuum or thin air, and radiation are
+    stated below as limits. They are not rows in
+    <code>results/sources.csv</code>.</p>
+    <p>The lunar slope rows are the locked Site01 tile: interquartile
+    range 8.0-16.7 degrees, median 12.3 degrees, patch longitude
+    -137.4771, patch latitude -89.4632, patch size 16 km (LOLA 5 m/pixel
+    slope, Site01 connecting ridge).</p>
+    <h2 id="decision-in-brief">Decision in brief</h2>
+    <p>Among the two compared patches, Vinchina is the stronger
+    candidate for a <strong>terrain-only mobility study</strong>: its
+    three-proxy score is lower (0.167981 vs. 0.186845), and its
+    later-measured median slope (9.48 degrees) lies inside the lunar
+    8.0-16.7 degree IQR. Kunlun's 7.08-degree median is below the band.
+    Keep Kunlun as a contrasting lower-slope case; do not describe
+    either site as a validated analog.</p>
+    <p>The score uses only June 2024 NDVI, precipitation, and night
+    surface temperature. None has a direct Moon or Mars referent in the
+    cited source table, and global slope was null, so the slope
+    comparison is separate. This does not turn the proxy score into a
+    mission suitability or success measure. The proposed paired rover
+    trial has not been run; access, safety, and logistics have not been
+    assessed.</p>
+    <h2 id="site-a--kunlun-mountains">Site A — Kunlun Mountains</h2>
+    <h3 id="where-it-is">Where it is</h3>
+    <p>Kunlun Mountains, Rutog County, Ngari Prefecture, Tibet
+    Autonomous Region, China. Global-screen discovery candidate kept
+    after the Worldview rejections. Patch center latitude 35.3,
+    longitude 81.1. Patch size 0.2 deg x 0.2 deg. Cell
+    <code>35.3_81.1</code>. Median elevation 6120.8 m (Copernicus DEM,
+    GLO-30 Public, 2021 release).</p>
+    <p>On 2024-06-15, NASA Worldview Corrected Reflectance (True Color),
+    Terra / MODIS, v6.1 STD classed this patch as bare ground with
+    ridgeline snow. The Kunlun Mountains label was read on 2024-09-20 in
+    that layer. The row is a surface class.</p>
+    <p>The discovery cells in <code>results/sources.csv</code> classed
+    as ice-sheet interior, and not kept, are latitude 73.5 longitude
+    -40.5, latitude 73.5 longitude -40.7, latitude 73.9 longitude -40.1,
+    latitude 73.5 longitude -40.9, and latitude 74.1 longitude -39.9.
+    Each was classed on 2024-06-15 and confirmed on 2024-08-15.</p>
+    <p>Published score 0.186845. That is a worse partial match than the
+    control score 0.167981.</p>
+    <h3 id="matches">Matches</h3>
+    <p>The score 0.186845 is the weighted distance of these three rows.
+    No Moon or Mars value for these three quantities is in
+    <code>results/sources.csv</code>. Each Earth number stands
+    alone.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Dimension</th>
+    <th>Earth value</th>
+    <th>Unit</th>
+    <th>Source</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Vegetation</td>
+    <td>-0.01995</td>
+    <td>NDVI</td>
+    <td>MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg CMG,
+    061, 1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Dryness</td>
+    <td>0.006</td>
+    <td>mm/hr</td>
+    <td>GPM IMERG Final Precipitation L3 1 month 0.1 degree, 07 V07B,
+    1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Night temperature</td>
+    <td>258.8</td>
+    <td>kelvin</td>
+    <td>MODIS/Terra Land Surface Temperature/Emissivity Monthly L3
+    Global 0.05Deg CMG, 061, 1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Day temperature (descriptive; not scored)</td>
+    <td>269.12</td>
+    <td>kelvin</td>
+    <td>MODIS/Terra Land Surface Temperature/Emissivity Monthly L3
+    Global 0.05Deg CMG, 061, 1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Paired day–night range (descriptive; not scored)</td>
+    <td>11.05</td>
+    <td>kelvin</td>
+    <td>Same MOD11C3 file; median of paired valid-pixel
+    <code>day - night</code> values</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>Day temperature and paired range have no Moon or Mars referent in
+    the source table.</p>
+    <h3 id="breaks">Breaks</h3>
+    <p>Slope misses the lunar band. Median slope is 7.08 degrees
+    (Copernicus DEM, GLO-30 Public, 2021 release). The locked lunar
+    interquartile range is 8.0-16.7 degrees, and the lunar median is
+    12.3 degrees. The Earth median lies outside that band. This slope
+    was measured after the score and was not part of 0.186845.</p>
+    <p>Gravity is a limit, not a value computed from a raster. Gravity
+    on the Moon is about one-sixth of Earth. Gravity on Mars is about
+    three-eighths of Earth. This patch is a full-Earth-gravity outdoor
+    test.</p>
+    <p>Atmosphere is a limit, not a value computed from a raster. The
+    Moon is a vacuum. Mars has thin carbon-dioxide air, roughly one
+    percent of Earth’s surface pressure. This patch has Earth’s air.</p>
+    <p>Radiation is a limit, not a value computed from a raster. Air and
+    the magnetic field block most of it at Earth’s surface. An outdoor
+    test here does not qualify electronics or crews for the surface dose
+    on the Moon or Mars.</p>
+    <p>Night temperature stands alone at 258.8 kelvin. A permanently
+    shadowed lunar floor is not a thermal analog for any outdoor Earth
+    site. No Diviner temperature is in
+    <code>results/sources.csv</code>.</p>
+    <p>No ice or permafrost row is in <code>results/sources.csv</code>.
+    Ridgeline snow in the Worldview class is a surface class. It is not
+    a measured ice body, so this patch is not an operations analog for
+    sampling lunar ice.</p>
+    <h3 id="how-a-mission-would-use-it">How a mission would use it</h3>
+    <p>Use Kunlun as the lower-slope site in a proposed comparison with
+    Vinchina. After route-scale terrain, surface-material, access, and
+    safety checks, run matched-length traverses with the same rover
+    setup, payload, and speed. Record local slope and material; log
+    wheel energy per distance, slip, and interruptions over repeated
+    runs. Differences would be site-specific, not a pure slope effect.
+    This is a proposal, not a completed field trial. Vacuum, radiation,
+    and suit or landing-engine tests stay in a lab.</p>
+    <h3 id="confidence">Confidence</h3>
+    <p>Low. The published score omitted slope, and the later-measured
+    median falls below the lunar band. No Earth ice or permafrost layer
+    was used, so this site is not an ice-sampling analog.</p>
+    <p>The credibility pack is <a
+    href="../notes/credibility.html">notes/credibility.md</a>, <a
+    href="../notes/factor-coverage.md">notes/factor-coverage.md</a>, and
+    <a href="../notes/sensitivity.md">notes/sensitivity.md</a>.</p>
+    <h2 id="site-b--vinchina">Site B — Vinchina</h2>
+    <h3 id="where-it-is-1">Where it is</h3>
+    <p>Vinchina, Departamento Vinchina, La Rioja, Argentina. Hold-out
+    comparator: the best eligible cell inside the defined Atacama-region
+    box, scored with the same weights. The cell center is on the
+    Argentine side of the Andean front. Patch center latitude -27.9,
+    longitude -68.9. Patch size 0.2 deg x 0.2 deg. Cell
+    <code>-27.9_-68.9</code>. Median elevation 5330.7 m (Copernicus DEM,
+    GLO-30 Public, 2021 release).</p>
+    <p>On 2024-06-15 the same Worldview layer classed this patch as arid
+    mountains. A closer look on 2024-11-15 in that layer showed bare
+    mountains and small snow patches. The row is a surface class.</p>
+    <p>Published score 0.167981, from <code>ndvi_median</code>,
+    <code>precip_median_mm_hr</code>, and
+    <code>lst_night_median_k</code>. Slope was null in that score.</p>
+    <h3 id="matches-1">Matches</h3>
+    <p>Slope. Median slope is 9.48 degrees (Copernicus DEM, GLO-30
+    Public, 2021 release; the source row rounds 9.476 degrees to 9.48).
+    The locked lunar interquartile range is 8.0-16.7 degrees, and the
+    lunar median is 12.3 degrees (LOLA Site01, patch longitude
+    -137.4771, patch latitude -89.4632). The Earth median is inside the
+    band. The match is a mobility comparison on that slope range. The
+    slope row was not part of the score 0.167981.</p>
+    <p>The score 0.167981 is the weighted distance of these three rows.
+    No Moon or Mars value for these three quantities is in
+    <code>results/sources.csv</code>. Each Earth number stands
+    alone.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Dimension</th>
+    <th>Earth value</th>
+    <th>Unit</th>
+    <th>Source</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>Vegetation</td>
+    <td>0.00925</td>
+    <td>NDVI</td>
+    <td>MODIS/Terra Vegetation Indices Monthly L3 Global 0.05Deg CMG,
+    061, 1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Dryness</td>
+    <td>0.008</td>
+    <td>mm/hr</td>
+    <td>GPM IMERG Final Precipitation L3 1 month 0.1 degree, 07 V07B,
+    1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Night temperature</td>
+    <td>254.45</td>
+    <td>kelvin</td>
+    <td>MODIS/Terra Land Surface Temperature/Emissivity Monthly L3
+    Global 0.05Deg CMG, 061, 1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Day temperature (descriptive; not scored)</td>
+    <td>264.58</td>
+    <td>kelvin</td>
+    <td>MODIS/Terra Land Surface Temperature/Emissivity Monthly L3
+    Global 0.05Deg CMG, 061, 1-30 June 2024</td>
+    </tr>
+    <tr>
+    <td>Paired day–night range (descriptive; not scored)</td>
+    <td>10.44</td>
+    <td>kelvin</td>
+    <td>Same MOD11C3 file; median of paired valid-pixel
+    <code>day - night</code> values</td>
+    </tr>
+    </tbody>
+    </table>
+    <p>Day temperature and paired range have no Moon or Mars referent in
+    the source table.</p>
+    <h3 id="breaks-1">Breaks</h3>
+    <p>Gravity, atmosphere, and radiation are the same limits as at Site
+    A. They were not computed from a raster. Gravity on the Moon is
+    about one-sixth of Earth, and on Mars about three-eighths of Earth.
+    The Moon is a vacuum, and Mars has thin carbon-dioxide air, roughly
+    one percent of Earth’s surface pressure. Air and the magnetic field
+    block most radiation here, so an outdoor test does not qualify
+    electronics or crews for the surface dose.</p>
+    <p>Night temperature stands alone at 254.45 kelvin. A permanently
+    shadowed lunar floor is not a thermal analog for this outdoor
+    patch.</p>
+    <p>No ice or permafrost row is in <code>results/sources.csv</code>.
+    Small snow patches in the Worldview check are a surface class, not a
+    measured ice body.</p>
+    <p>Median elevation 5330.7 m has no lunar or Martian elevation in
+    <code>results/sources.csv</code>. That Earth number stands
+    alone.</p>
+    <h3 id="how-a-mission-would-use-it-1">How a mission would use
+    it</h3>
+    <p>Use Vinchina as the in-band site in the same proposed comparison.
+    Measure the same rover outcomes and route context as at Kunlun. The
+    two-site comparison could inform a field-rehearsal choice, but would
+    not isolate slope as the cause without route-level controls. No
+    result exists before field validation. Access, safety, and logistics
+    have not been assessed. Vacuum, radiation, and suit or
+    landing-engine tests stay in a lab.</p>
+    <h3 id="confidence-1">Confidence</h3>
+    <p>Low. The 9.48-degree median is inside the lunar slope band, but
+    it was measured after and is separate from the published score. No
+    Earth ice or permafrost layer was used, so this site is not an
+    ice-sampling analog.</p>
+    <p>The credibility pack is <a
+    href="../notes/credibility.html">notes/credibility.md</a>, <a
+    href="../notes/factor-coverage.md">notes/factor-coverage.md</a>, and
+    <a href="../notes/sensitivity.md">notes/sensitivity.md</a>.</p>
+    <h2 id="mars">Mars</h2>
+    <p>The case locked in <code>notes/targets.md</code> is ground ice.
+    The region is Arcadia Planitia, the terraced crater Badger. No
+    second Mars region was added. Bramson et al. (2015) used CTX imagery
+    and SHARAD radargrams, checked against MOLA-based clutter
+    simulations, and inferred a decameters-thick layer that is mostly
+    excess water ice at a flat terrace 43 m deep (<a
+    href="https://doi.org/10.1002/2015GL064844">DOI</a>). This is
+    published target evidence; this project did not retrieve or process
+    a Badger ice raster.</p>
+    <p>The Earth-side cold and vegetation proxies are 258.8 kelvin and
+    NDVI -0.01995 at Kunlun, and 254.45 kelvin and NDVI 0.00925 at
+    Vinchina. No Mars temperature or vegetation value is in
+    <code>results/sources.csv</code>, so these Earth values stand alone.
+    No Earth ice or permafrost layer was used; therefore, no Mars Earth
+    analog is claimed and the Earth ice comparison remains open.</p>
+    <h2 id="source-rows-behind-the-scores">Source rows behind the
+    scores</h2>
+    <table>
+    <thead>
+    <tr>
+    <th>Quantity</th>
+    <th>Value</th>
+    <th>Unit</th>
+    <th>Patch longitude</th>
+    <th>Patch latitude</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td>partial match score</td>
+    <td>0.186845</td>
+    <td>weighted distance</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>ndvi_median</td>
+    <td>-0.01995</td>
+    <td>NDVI</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>precip_median_mm_hr</td>
+    <td>0.006</td>
+    <td>mm/hr</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>lst_night_median_k</td>
+    <td>258.8</td>
+    <td>kelvin</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>lst_day_median_k</td>
+    <td>269.12</td>
+    <td>kelvin</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>lst_day_night_range_median_k</td>
+    <td>11.05</td>
+    <td>kelvin</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>slope_median_deg</td>
+    <td>7.08</td>
+    <td>degrees</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>elevation_median</td>
+    <td>6120.8</td>
+    <td>m</td>
+    <td>81.1</td>
+    <td>35.3</td>
+    </tr>
+    <tr>
+    <td>partial match score</td>
+    <td>0.167981</td>
+    <td>weighted distance</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>ndvi_median</td>
+    <td>0.00925</td>
+    <td>NDVI</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>precip_median_mm_hr</td>
+    <td>0.008</td>
+    <td>mm/hr</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>lst_night_median_k</td>
+    <td>254.45</td>
+    <td>kelvin</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>lst_day_median_k</td>
+    <td>264.58</td>
+    <td>kelvin</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>lst_day_night_range_median_k</td>
+    <td>10.44</td>
+    <td>kelvin</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>slope_median_deg</td>
+    <td>9.48</td>
+    <td>degrees</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>elevation_median</td>
+    <td>5330.7</td>
+    <td>m</td>
+    <td>-68.9</td>
+    <td>-27.9</td>
+    </tr>
+    <tr>
+    <td>lunar slope interquartile range</td>
+    <td>8.0-16.7</td>
+    <td>degrees</td>
+    <td>-137.4771</td>
+    <td>-89.4632</td>
+    </tr>
+    <tr>
+    <td>lunar slope median</td>
+    <td>12.3</td>
+    <td>degrees</td>
+    <td>-137.4771</td>
+    <td>-89.4632</td>
+    </tr>
+    </tbody>
+    </table>
+  </main>
+</body>
+</html>
