@@ -63,6 +63,16 @@ Earth cannot copy gravity, vacuum, thin carbon-dioxide air, or radiation. Those 
 
 `slope_median_deg` and `slope_valid_count` are blank on every land cell in the feature grid, so the published scores left slope out. The 7.08 degree and 9.48 degree figures are later measurements of the two patches only. A blank vegetation, night-temperature, or precipitation value means the layer did not cover that cell. Every land cell south of 60°S has a blank NDVI in this June table. Minerals, an ice-map raster, and a dust index for Badger are blank in [`notes/targets.md`](notes/targets.md). No ice or permafrost map was opened. A null feature is part of the result.
 
+## Credibility pack
+
+The score is a partial match on measured features, not a probability of mission success. A lower score is a closer partial match.
+
+- [`notes/credibility.md`](notes/credibility.md) — pedigree, verification, validation, and uncertainty
+- [`notes/factor-coverage.md`](notes/factor-coverage.md) — which traits are measured, missing, or limits
+- [`notes/sensitivity.md`](notes/sensitivity.md) — what the Site A and Site B order does when a weight is set to 0
+
+The page is an analog screen for a rover rehearsal on measured ground. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
+
 ## Read next
 
 - [`results/RESULTS.md`](results/RESULTS.md) — the two dossiers

@@ -40,3 +40,5 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+docs/master-prompt-nasa-grade-upgrade.md

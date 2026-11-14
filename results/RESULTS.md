@@ -48,7 +48,9 @@ The rehearsal is one rover drive on the measured median slope of 7.08 degrees, a
 
 ### Confidence
 
-Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score also omitted slope, and the slope measured later falls outside the lunar band.
+Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score also omitted slope, and the slope measured later falls outside the lunar band. Ice is unmeasured, so this site stays at low confidence.
+
+The credibility pack is [notes/credibility.md](../notes/credibility.md), [notes/factor-coverage.md](../notes/factor-coverage.md), and [notes/sensitivity.md](../notes/sensitivity.md).
 
 ## Site B — Vinchina
 
@@ -88,7 +90,9 @@ The control comparison supports one rover drive on the measured median slope of 
 
 ### Confidence
 
-Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score omitted slope. The slope measured later, 9.48 degrees, does fall inside 8.0-16.7 degrees, and that comparison is reported above as its own row.
+Low. The largest missing dataset is an ice or permafrost map. None was opened. That gap dominates. The published score omitted slope. The slope measured later, 9.48 degrees, does fall inside 8.0-16.7 degrees, and that comparison is reported above as its own row. Ice is unmeasured, so this site stays at low confidence.
+
+The credibility pack is [notes/credibility.md](../notes/credibility.md), [notes/factor-coverage.md](../notes/factor-coverage.md), and [notes/sensitivity.md](../notes/sensitivity.md).
 
 ## Mars
 
