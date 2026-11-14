@@ -1,0 +1,53 @@
+{
+  "score_meaning": "A partial match on measured features, not a probability of mission success.",
+  "lunar_slope_band_deg": [8.0, 16.7],
+  "lunar_slope_median_deg": 12.3,
+  "site_a": {
+    "role": "Less-famous site after the Worldview rejections",
+    "name": "Kunlun Mountains",
+    "country": "China",
+    "locality": "Rutog County, Ngari Prefecture, Tibet Autonomous Region",
+    "center": {
+      "latitude": 35.3,
+      "longitude": 81.1
+    },
+    "patch_size": "0.2 deg x 0.2 deg",
+    "cell_id": "35.3_81.1",
+    "score": 0.186845,
+    "score_note": "Best eligible discovery cell outside the Greenland ice-sheet cluster. The score is a worse partial match than the control cell (0.167981). The published score left slope_median_deg out because that column was null.",
+    "features_used": {
+      "ndvi_median": -0.01995,
+      "precip_median_mm_hr": 0.006,
+      "lst_night_median_k": 258.8,
+      "slope_median_deg": 7.08,
+      "elevation_median_m": 6120.8
+    },
+    "features_missing": [],
+    "features_missing_from_score": ["slope_median_deg"],
+    "slope_versus_lunar_band": "Median slope 7.08 degrees is 0.92 degrees below the locked lower edge of 8.0 degrees. The patch sits just outside the band."
+  },
+  "site_b": {
+    "role": "Famous control. Best cell inside the Atacama hold-out box, scored with the same weights.",
+    "name": "Vinchina",
+    "country": "Argentina",
+    "locality": "Departamento Vinchina, La Rioja",
+    "center": {
+      "latitude": -27.9,
+      "longitude": -68.9
+    },
+    "patch_size": "0.2 deg x 0.2 deg",
+    "cell_id": "-27.9_-68.9",
+    "score": 0.167981,
+    "score_note": "Copied from results/control.csv. The hold-out box is the Atacama Desert defined in src/score.py. This cell center is on the Argentine side of the Andean front. The published score left slope_median_deg out because that column was null.",
+    "features_used": {
+      "ndvi_median": 0.00925,
+      "precip_median_mm_hr": 0.008,
+      "lst_night_median_k": 254.45,
+      "slope_median_deg": 9.48,
+      "elevation_median_m": 5330.7
+    },
+    "features_missing": [],
+    "features_missing_from_score": ["slope_median_deg"],
+    "slope_versus_lunar_band": "Median slope 9.48 degrees is inside the locked band of 8.0 to 16.7 degrees."
+  }
+}
