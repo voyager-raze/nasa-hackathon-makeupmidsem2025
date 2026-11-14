@@ -1,0 +1,42 @@
+session-prompts/
+docs/meta-prompt-session-chain.md
+
+# Bulk rasters and similar. CSV tables and notes stay tracked.
+*.tif
+*.tiff
+*.gtiff
+*.img
+*.hdf
+*.h5
+*.hdf5
+*.he5
+*.nc
+*.nc4
+*.cdf
+*.fits
+*.fit
+*.jp2
+*.grd
+*.cub
+*.lbl
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.gz
+
+# Earthdata and other credentials. Do not commit these.
+.netrc
+_netrc
+.env
+.env.*
+*.cookie
+cookies.txt
+.urs_cookies
+.earthdata*
+
+# Local Python environments
+__pycache__/
+*.pyc
+.venv/
+venv/
