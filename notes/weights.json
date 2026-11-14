@@ -1,0 +1,11 @@
+{
+  "role": "Default Moon-operations weights read by src/score.py. A larger weight pulls the weighted distance toward that feature. Lower score is a closer partial match.",
+  "cold_tail_percentile": 10,
+  "distance_scale_percentile": 95,
+  "features": {
+    "slope_median_deg": {"weight": 1.0},
+    "ndvi_median": {"weight": 1.0},
+    "precip_median_mm_hr": {"weight": 1.0},
+    "lst_night_median_k": {"weight": 1.0}
+  }
+}

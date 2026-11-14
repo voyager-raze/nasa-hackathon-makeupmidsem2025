@@ -1,0 +1,6 @@
+rank,cell_id,lat_center_deg,lon_center_deg,slope_median_deg,ndvi_median,precip_median_mm_hr,lst_night_median_k,score,features_used,features_missing
+1,73.5_-40.5,73.5,-40.5,null,-0.032,0,252.94,0.162265,ndvi_median;precip_median_mm_hr;lst_night_median_k,slope_median_deg
+2,73.5_-40.7,73.5,-40.7,null,-0.03205,0,253.02,0.162595,ndvi_median;precip_median_mm_hr;lst_night_median_k,slope_median_deg
+3,73.9_-40.1,73.9,-40.1,null,-0.0324,0,253.13,0.163160,ndvi_median;precip_median_mm_hr;lst_night_median_k,slope_median_deg
+4,73.5_-40.9,73.5,-40.9,null,-0.0318,0,253.21,0.163229,ndvi_median;precip_median_mm_hr;lst_night_median_k,slope_median_deg
+5,74.1_-39.9,74.1,-39.9,null,-0.0352,0,252.88,0.163318,ndvi_median;precip_median_mm_hr;lst_night_median_k,slope_median_deg
