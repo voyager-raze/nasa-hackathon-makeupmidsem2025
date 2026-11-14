@@ -10,6 +10,8 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import pytest
+import h5py
+from pyhdf.SD import SD, SDC
 
 from src.score import (
     FEATURE_ORDER,
@@ -25,6 +27,7 @@ from src.export_map_data import rejected_center
 
 ROOT = Path(__file__).resolve().parents[1]
 FEATURES = ROOT / "data" / "processed" / "features.csv"
+MAP_HTML = ROOT / "web" / "index.html"
 COLD_TARGET = 214.3
 SLOPE_BAND = (8.0, 16.7)
 
@@ -166,6 +169,72 @@ def test_block_median_keeps_missing_values_missing_and_counts_only_finite_pixels
     assert missing_counts[0, 0] == 0
 
 
+def test_june_site_measurements_match_independent_raw_granule_windows():
+    """Re-read each site window directly from original HDF granules."""
+    raw = ROOT / "data" / "raw"
+    ndvi_path = raw / "MOD13C2.A2024153.061.2024198104950.hdf"
+    lst_path = raw / "MOD11C3.A2024153.061.2024187024328.hdf"
+    imerg_path = raw / "3B-MO.MS.MRG.3IMERG.20240601-S000000-E235959.06.V07B.HDF5"
+    if not all(path.is_file() for path in (ndvi_path, lst_path, imerg_path)):
+        pytest.skip("Original June 2024 granules are unavailable")
+
+    features = pd.read_csv(FEATURES)
+    sites = [("Kunlun", 35.3, 81.1), ("Vinchina", -27.9, -68.9)]
+
+    def modis_window(dataset_name: str, lat: float, lon: float) -> tuple[np.ndarray, dict]:
+        row = round((90.0 - (lat + 0.1)) / 0.05)
+        col = round((lon - 0.1 + 180.0) / 0.05)
+        hdf = SD(str(ndvi_path if dataset_name.startswith("CMG") else lst_path), SDC.READ)
+        try:
+            ds = hdf.select(dataset_name)
+            return np.array(ds.get()[row:row + 4, col:col + 4]), dict(ds.attributes())
+        finally:
+            hdf.end()
+
+    def modis_physical(raw_values: np.ndarray, attrs: dict, divide: bool) -> np.ndarray:
+        values = raw_values.astype(float)
+        low, high = map(float, attrs["valid_range"])
+        values[(raw_values == attrs["_FillValue"]) | (raw_values < low) | (raw_values > high)] = np.nan
+        return values / float(attrs["scale_factor"]) if divide else values * float(attrs["scale_factor"])
+
+    with h5py.File(imerg_path, "r") as imerg:
+        rain = imerg["Grid/precipitation"]
+        rain_fill = float(rain.attrs["_FillValue"])
+
+        for site, lat, lon in sites:
+            feature = features.loc[
+                (features["lat_center_deg"] == lat) & (features["lon_center_deg"] == lon)
+            ].iloc[0]
+            ndvi_raw, ndvi_attrs = modis_window("CMG 0.05 Deg Monthly NDVI", lat, lon)
+            ndvi = modis_physical(ndvi_raw, ndvi_attrs, divide=True)
+            assert int(np.isfinite(ndvi).sum()) == int(feature["ndvi_valid_count"]) == 16
+            assert float(np.nanmedian(ndvi)) == pytest.approx(float(feature["ndvi_median"]), abs=1e-9), site
+
+            night_raw, night_attrs = modis_window("LST_Night_CMG", lat, lon)
+            night = modis_physical(night_raw, night_attrs, divide=False)
+            assert int(np.isfinite(night).sum()) == int(feature["lst_night_valid_count"]) == 16
+            assert float(np.nanmedian(night)) == pytest.approx(float(feature["lst_night_median_k"]), abs=1e-9), site
+
+            day_raw, day_attrs = modis_window("LST_Day_CMG", lat, lon)
+            day = modis_physical(day_raw, day_attrs, divide=False)
+            assert int(np.isfinite(day).sum()) == int(feature["lst_day_valid_count"]) == 16
+            assert float(np.nanmedian(day)) == pytest.approx(float(feature["lst_day_median_k"]), abs=1e-9), site
+            paired = np.isfinite(day) & np.isfinite(night)
+            day_night = day[paired] - night[paired]
+            assert int(paired.sum()) == int(feature["lst_day_night_range_valid_count"]) == 16
+            assert float(np.median(day_night)) == pytest.approx(
+                float(feature["lst_day_night_range_median_k"]), abs=1e-9
+            ), site
+
+            north_row = round((90.0 - (lat + 0.1)) / 0.1)
+            west_col = round((lon - 0.1 + 180.0) / 0.1)
+            south_row_in_source = 1800 - (north_row + 2)
+            rain_window = np.array(rain[0, west_col:west_col + 2, south_row_in_source:south_row_in_source + 2], dtype=float)
+            rain_window[np.isclose(rain_window, rain_fill) | (rain_window < -9000)] = np.nan
+            assert int(np.isfinite(rain_window).sum()) == int(feature["precip_valid_count"]) == 4
+            assert float(np.nanmedian(rain_window)) == pytest.approx(float(feature["precip_median_mm_hr"]), abs=1e-9), site
+
+
 def test_eligibility_fails_closed_when_any_active_feature_is_missing():
     frame = pd.DataFrame({"ndvi_median": [0.1, 0.2], "precip_median_mm_hr": [0.0, float("nan")]})
     assert eligible_mask(frame, ["ndvi_median", "precip_median_mm_hr"]).tolist() == [True, False]
@@ -194,3 +263,26 @@ def test_rank_ties_resolve_by_latitude_then_longitude():
         kind="mergesort",
     )
     assert list(ranked.index) == [3, 2, 1, 0]
+
+
+def test_generated_dashboard_keeps_targets_gaps_and_custom_weights_visible():
+    page = MAP_HTML.read_text(encoding="utf-8")
+    for required in (
+        "Moon target",
+        "Mars target · ground ice",
+        "Planetary referent · Earth status",
+        "No direct referent",
+        "valid pixels",
+        "MOD11 quality flags were not additional filters",
+        "Moon and Mars targets remain fixed",
+        "no confidence estimate",
+        "Physical limits:",
+        "Customize score",
+        "Reset defaults",
+        "../results/score-notes.md",
+        "../notes/data-log.md",
+        "../notes/credibility.md",
+        "@media (min-width: 981px)",
+    ):
+        assert required in page
+    assert "confidence %" not in page.lower()

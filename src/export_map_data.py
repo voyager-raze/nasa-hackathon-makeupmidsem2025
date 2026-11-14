@@ -36,13 +36,20 @@ STABILITY_JSON = ROOT / "results" / "weight-stability.json"
 OUT_HTML = ROOT / "web" / "index.html"
 
 NULL_I32 = np.int32(-2147483648)
-RECORD_BYTES = 24
+RECORD_BYTES = 32
 MEASURED_PACK = (
     "ndvi_median",
     "precip_median_mm_hr",
     "lst_night_median_k",
     "lst_day_median_k",
     "lst_day_night_range_median_k",
+)
+COVERAGE_PACK = (
+    ("ndvi_median", "ndvi_valid_count", 16),
+    ("precip_median_mm_hr", "precip_valid_count", 4),
+    ("lst_night_median_k", "lst_night_valid_count", 16),
+    ("lst_day_median_k", "lst_day_valid_count", 16),
+    ("lst_day_night_range_median_k", "lst_day_night_range_valid_count", 16),
 )
 PAGE_FEATURES = (
     {"key": "ndvi_median", "label": "Vegetation", "unit": "NDVI"},
@@ -158,6 +165,15 @@ def pack_tenths(series: pd.Series) -> np.ndarray:
     if np.max(np.abs(back - series.to_numpy(dtype=np.float64))) > 1e-9:
         stop([f"Embedding {series.name} changed a coordinate. The page was not written."])
     return out
+
+
+def pack_coverage(series: pd.Series, maximum: int) -> np.ndarray:
+    if series.isna().any():
+        stop([f"Coverage counts in {series.name} contain missing values; the page was not written."])
+    values = series.to_numpy(dtype=np.int64)
+    if np.any(values < 0) or np.any(values > maximum):
+        stop([f"Coverage counts in {series.name} fall outside 0..{maximum}; the page was not written."])
+    return values.astype(np.uint8)
 
 
 def score_frame(
@@ -368,7 +384,7 @@ def page_html(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Partial Match</title>
+<title>Mission Analog Readiness</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -379,13 +395,18 @@ def page_html(
 <body>
 <div class="pm-app">
   <header class="pm-banner">
-    <h1>Partial Match</h1>
+    <h1>Mission Analog Readiness</h1>
     <div class="pm-lead">
-      <p class="pm-sentence">The score is a partial match on measured features, not a probability of mission success.</p>
-      <p class="pm-quiet">A lower score is a closer partial match.</p>
-      <p class="pm-quiet">Heuristic index · no direct planetary referents · June 2024 only · no confidence estimate</p>
+      <p class="pm-sentence">Evidence-based analog screening for rover rehearsal sites.</p>
+      <p class="pm-quiet">Mission success probability: <strong>not estimable</strong> from the available evidence.</p>
+      <p class="pm-quiet">June 2024 snapshot · 0/3 scored features have direct Moon or Mars referents · low evidence confidence</p>
       <p id="pm-check">Reading the embedded table.</p>
     </div>
+    <nav class="pm-links" aria-label="Evidence and method">
+      <a href="../results/score-notes.md">Method</a>
+      <a href="../notes/data-log.md">Data log</a>
+      <a href="../notes/credibility.md">Validation</a>
+    </nav>
     <button type="button" id="pm-guide" class="pm-btn">Guide</button>
   </header>
   <div class="pm-map-cell">
@@ -406,20 +427,31 @@ def page_html(
       <p id="pm-cell-coord" class="pm-coord"></p>
       <p id="pm-cell-role"></p>
       <p class="pm-scoreline"><span id="pm-live-score" class="pm-score">—</span> <span id="pm-score-kind">June three-feature score</span></p>
+      <p id="pm-probability" class="pm-probability">Mission success probability: <strong>NOT ESTIMABLE</strong></p>
+      <p id="pm-confidence" class="pm-confidence">Evidence confidence: <strong>LOW</strong> · one month, indirect proxies, no outcome validation</p>
+      <p class="pm-section-kicker">Earth measurements · June 2024</p>
       <div id="pm-earth"></div>
+      <p class="pm-coverage-note">Pixel counts use product fill/range checks; MOD11 quality flags were not additional filters.</p>
+      <p class="pm-target-lock-note">Moon and Mars targets remain fixed when you select another Earth cell.</p>
       <div class="pm-detail-grid">
         <article class="pm-block pm-moon">
           <div class="pm-target-heading"><h3>Moon target</h3><span class="pm-fixed">FIXED</span></div>
           <p class="pm-place">{html.escape(bodies["moon_name"])}</p>
           <p class="pm-coord">{html.escape(bodies["moon_center"])}</p>
-          <div id="pm-moon-rows"></div>
+          <div class="pm-block-content">
+            <div class="pm-target-columns"><span>Feature</span><span>Planetary referent · Earth status</span></div>
+            <div id="pm-moon-rows"></div>
+          </div>
         </article>
         <article class="pm-block pm-mars">
           <div class="pm-target-heading"><h3>Mars target · ground ice</h3><span class="pm-fixed">FIXED</span></div>
           <p class="pm-place">{html.escape(bodies["mars_name"])}</p>
           <p class="pm-coord">{html.escape(bodies["mars_center"])}</p>
-          <div id="pm-mars-rows"></div>
-          <p class="pm-minerals">Minerals, ice map, and dust index: no data.</p>
+          <div class="pm-block-content">
+            <div class="pm-target-columns"><span>Feature</span><span>Planetary referent · Earth status</span></div>
+            <div id="pm-mars-rows"></div>
+            <p class="pm-minerals">Minerals, ice map, and dust index: no data.</p>
+          </div>
         </article>
       </div>
       <p class="pm-limit"><strong>Physical limits:</strong> gravity, vacuum or thin air, and radiation. Not score terms.</p>
@@ -454,6 +486,7 @@ def page_html(
       <summary>Customize score</summary>
       <div class="pm-weight-panel">
         <p class="pm-hint">Adjust measured-feature weights (0–5). Ranking updates live; normalization scales and target proxies stay fixed. This changes the heuristic, not its validation.</p>
+        <p id="pm-weight-status" class="pm-weight-status">Three measured score terms are active at the default weights.</p>
         {weight_controls(weights, all_null)}
         <div class="pm-weight-actions"><span class="pm-hint">Default: equal weights on the three measured features.</span><button type="button" id="pm-reset" class="pm-btn">Reset defaults</button></div>
       </div>
@@ -572,6 +605,121 @@ STYLE = """
     .pm-earth-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .pm-note { grid-column: 1 / -1; }
   }
+  /* Compact mission dashboard: targets and data stay visible beside the map. */
+  @media (min-width: 981px) {
+    html, body { height: 100%; overflow: hidden; }
+    .pm-app { height: 100dvh; grid-template-columns: minmax(0, 0.88fr) minmax(600px, 1.12fr); grid-template-rows: 82px minmax(0, 1fr); }
+    .pm-banner { align-items: center; flex-wrap: nowrap; padding: 8px 14px; gap: 14px; }
+    .pm-lead { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr); gap: 2px 12px; align-items: center; }
+    .pm-sentence { font-size: 13px; font-weight: 600; }
+    .pm-lead .pm-quiet { margin: 0; font-size: 11px; }
+    #pm-check { grid-column: 1 / -1; font-size: 11px; margin: 0; }
+    .pm-links { display: flex; gap: 9px; white-space: nowrap; }
+    .pm-links a { color: var(--blue); font-size: 11px; font-weight: 600; text-decoration: none; }
+    .pm-links a:hover { text-decoration: underline; }
+    .pm-map-cell { min-height: 0; }
+    .pm-side { min-height: 0; overflow: hidden; padding: 8px; border-left: 1px solid var(--line); display: grid; grid-template-rows: minmax(0, 1fr) 224px; gap: 8px; position: relative; }
+    .pm-card { border-radius: 10px; padding: 10px; margin: 0; }
+    #pm-selected { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 5px; }
+    #pm-selected > h2 { font-size: 14px; }
+    .pm-id { margin-top: 0; font-size: 12px; }
+    .pm-coord { font-size: 11px; }
+    #pm-cell-role { color: var(--muted); font-size: 11px; line-height: 1.25; }
+    .pm-scoreline { min-height: 0; margin-top: 0; gap: 7px; }
+    .pm-score { font-size: 18px; }
+    #pm-score-kind { font-size: 11px; }
+    .pm-section-kicker { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .pm-target-lock-note { color: var(--muted); font-size: 9px; line-height: 1.15; }
+    .pm-weight-status { margin-top: 7px; padding: 7px 9px; border-radius: 7px; color: #174579; background: var(--blue-soft); font-size: 11px; }
+    #pm-earth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+    .pm-earth-line { display: block; min-width: 0; padding: 5px 6px; border: 1px solid var(--line); border-radius: 7px; background: #f8fafc; font-size: 10px; }
+    .pm-earth-line .pm-label { font-size: 10px; }
+    .pm-earth-line .pm-colname { display: none; }
+    .pm-earth-line .pm-num { margin-top: 2px; font-size: 11px; }
+    .pm-coverage { display: block; margin-top: 2px; color: var(--muted); font-family: "Segoe UI", Arial, sans-serif; font-size: 9px; }
+    .pm-coverage-note { color: var(--muted); font-size: 9px; line-height: 1.15; }
+    .pm-detail-grid { min-height: 0; flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .pm-block { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd; }
+    .pm-target-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+    .pm-block h3 { color: var(--ink); font-size: 11px; }
+    .pm-fixed { color: var(--blue); font-size: 9px; font-weight: 700; letter-spacing: .06em; }
+    .pm-place { margin-top: 2px; font-size: 11px; line-height: 1.2; }
+    .pm-block > .pm-coord { margin-top: 1px; white-space: nowrap; }
+    .pm-block-content { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+    .pm-target-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .82fr); gap: 4px; margin-top: 4px; padding: 3px 0; color: var(--muted); font-size: 8px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+    .pm-row { grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr); gap: 4px; padding: 4px 0; font-size: 10px; line-height: 1.2; }
+    .pm-row-feature { grid-column: auto; }
+    .pm-row .pm-label { font-size: 10px; }
+    .pm-row .pm-colname { display: none; }
+    .pm-target-value { font-size: 10px; font-weight: 600; }
+    .pm-status-chip { display: block; color: var(--muted); font-size: 9px; }
+    .pm-minerals, .pm-limit { margin-top: 4px; font-size: 10px; line-height: 1.2; }
+    .pm-bottom { display: grid; grid-template-columns: minmax(165px, .72fr) minmax(0, 1.28fr); gap: 8px; min-height: 0; }
+    .pm-stats { grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .pm-stat { padding: 7px 9px; gap: 1px; }
+    .pm-stat strong { font-size: 12px; }
+    .pm-stat-score { font-size: 16px; }
+    .pm-stat .pm-kicker { font-size: 10px; }
+    .pm-stat .pm-coord { font-size: 10px; }
+    .pm-bottom > section { min-height: 0; overflow: hidden; }
+    .pm-bottom > section h2 { font-size: 13px; }
+    #pm-status { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px; line-height: 1.2; margin-top: 3px; }
+    .pm-ranks { grid-template-columns: 1fr; gap: 3px; margin-top: 5px; }
+    .pm-ranks button { grid-template-columns: 18px minmax(0, 1fr) auto; gap: 4px; padding: 4px 6px; border-radius: 6px; font-size: 10px; }
+    .pm-ranks .pm-id { font-size: 10px; }
+    .pm-list-score { font-size: 10px; }
+    .pm-hint { font-size: 10px; line-height: 1.2; }
+    .pm-bottom .pm-hint { margin-top: 3px; }
+    #pm-weights { position: fixed; z-index: 1400; right: 14px; bottom: 14px; width: min(430px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); overflow: auto; padding: 0; border-color: #b9d4f6; box-shadow: 0 8px 30px rgba(18, 40, 70, .2); }
+    #pm-weights > summary { padding: 10px 14px; color: white; background: var(--blue); border-radius: 9px; list-style-position: inside; font-size: 12px; }
+    #pm-weights[open] > summary { border-radius: 9px 9px 0 0; }
+    .pm-weight-panel { padding: 12px; }
+    .pm-weight { padding: 6px 0; }
+    .pm-weight-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
+    @media (max-height: 760px) {
+      .pm-app { grid-template-rows: 70px minmax(0, 1fr); }
+      .pm-side { grid-template-rows: minmax(0, 1fr) 210px; padding: 6px; gap: 6px; }
+      #pm-selected { gap: 3px; padding: 8px; overflow-y: auto; }
+      .pm-row { padding: 3px 0; }
+      .pm-stat { padding: 5px 7px; }
+      .pm-ranks button { padding: 2px 4px; font-size: 9px; }
+      .pm-ranks .pm-id, .pm-list-score { font-size: 9px; }
+      #pm-status { -webkit-line-clamp: 1; }
+      .pm-bottom .pm-hint { font-size: 9px; }
+    }
+  }
+  @media (min-width: 981px) and (max-width: 1220px) {
+    .pm-app { grid-template-columns: minmax(0, .72fr) minmax(600px, 1.28fr); }
+    .pm-hud { gap: 5px; }
+    .pm-hud .pm-btn { padding: 6px 8px; font-size: 11px; }
+  }
+  @media (max-width: 980px) {
+    .pm-banner { padding: 10px 12px; }
+    .pm-links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pm-links a { color: var(--blue); font-size: 12px; font-weight: 600; }
+    .pm-lead { flex-basis: 220px; }
+    .pm-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .pm-coverage { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; }
+    .pm-coverage-note { color: var(--muted); font-size: 10px; }
+    .pm-block { min-width: 0; margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+    .pm-target-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); gap: 4px; margin-top: 5px; padding: 3px 0; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+    .pm-row { grid-template-columns: minmax(0, 1fr) minmax(0, .8fr); }
+    .pm-row-feature { grid-column: auto; }
+    .pm-bottom { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 8px; }
+    .pm-stats { grid-template-columns: 1fr; }
+    .pm-ranks { gap: 4px; }
+    #pm-weights { position: fixed; z-index: 1400; right: 10px; bottom: 10px; width: min(430px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); overflow: auto; padding: 0; margin: 0; box-shadow: 0 8px 30px rgba(18, 40, 70, .2); }
+    #pm-weights > summary { padding: 10px 14px; color: white; background: var(--blue); border-radius: 9px; list-style-position: inside; }
+    #pm-weights[open] > summary { border-radius: 9px 9px 0 0; }
+    .pm-weight-panel { padding: 12px; }
+  }
+  @media (max-width: 620px) {
+    .pm-detail-grid, .pm-bottom { grid-template-columns: 1fr; }
+    .pm-bottom { margin-top: 8px; }
+    .pm-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .pm-map-cell { height: 42vh; min-height: 260px; }
+    #pm-earth { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
 </style>
 """
 
@@ -647,7 +795,7 @@ function rawDistance(name, value) {
   return NaN;
 }
 
-let lats, lons, micros, norms, hold, n;
+let lats, lons, micros, coverage, norms, hold, n;
 let scores, eligible;
 let selected = -1;
 let pins = null;
@@ -784,41 +932,35 @@ function earthValue(key, i) {
 }
 
 function rowStatus(key, earth, which) {
-  if (!earth) return "no data";
+  if (!earth) return "Earth: no data";
   const kind = TARGET[key][which];
-  if (kind === "none") return "no referent";
+  if (kind === "none") return "Earth measured";
   if (kind === "band") {
     const distance = rawDistance("slope_median_deg", earth.value);
-    return distance === 0 ? "inside band" : "outside band";
+    return distance === 0 ? "inside lunar band" : "outside lunar band";
   }
-  return "no data";
+  return "Earth measured";
+}
+
+function coverageText(key, i) {
+  const spec = META.coverage[key];
+  if (!spec || i < 0) return "";
+  return coverage[key][i] + "/" + spec.denominator + " valid pixels";
 }
 
 function targetText(key, which) {
   const kind = TARGET[key][which];
   if (kind === "band") return bandText() + " degrees";
-  if (kind === "none") return "no referent";
+  if (kind === "none") return "No direct referent";
   return "no data";
 }
 
 function rowHtml(feature, earth, which) {
   const waiting = selected < 0;
   const status = waiting ? "\u2014" : rowStatus(feature.key, earth, which);
-  const earthText = waiting ? "\u2014" : (earth ? earth.text + " " + feature.unit : "no data");
-  let sentence = "";
-  if (!waiting && which === "moon" && feature.key === "slope_median_deg" && earth && (status === "inside band" || status === "outside band")) {
-    const where = status === "inside band" ? "inside" : "outside";
-    sentence = "Median slope " + earth.text + "\u00b0 is " + where + " " + bandText() + "\u00b0 (LOLA Site01).";
-    if (earth.patch) sentence += " Later patch, not in the June score.";
-  }
-  if (!waiting && which === "moon" && feature.key === "lst_night_median_k" && earth) {
-    sentence = "Night temperature " + earth.text + " K has no Diviner value in the source table.";
-  }
+  const target = waiting ? "\u2014" : targetText(feature.key, which);
   return "<div class=\"pm-row\"><div class=\"pm-row-feature\"><div class=\"pm-label\">" + esc(feature.label) + "</div><div class=\"pm-colname\">" + esc(feature.key) + "</div></div>" +
-  "<div><div class=\"pm-kicker\">Earth</div><div class=\"pm-num\">" + esc(earthText) + "</div></div>" +
-    "<div><div class=\"pm-kicker\">Target</div><div class=\"pm-num\">" + esc(targetText(feature.key, which)) + "</div></div>" +
-    "<div><div class=\"pm-kicker\">Status</div><div>" + esc(status) + "</div></div>" +
-    (sentence ? "<p class=\"pm-note\">" + esc(sentence) + "</p>" : "") + "</div>";
+    "<div><div class=\"pm-target-value\">" + esc(target) + "</div><span class=\"pm-status-chip\">" + esc(status) + "</span></div></div>";
 }
 
 function renderRows() {
@@ -835,7 +977,8 @@ function renderRows() {
     const value = earthValue(feature.key, selected);
     const shown = value ? value.text + " " + feature.unit : "no data";
     const note = value && value.patch ? " Later patch, not in the June score." : "";
-    return "<div class=\"pm-earth-line\"><div><div class=\"pm-label\">" + esc(feature.label) + "</div><div class=\"pm-colname\">" + esc(feature.key) + "</div></div><div class=\"pm-num\">" + esc(shown + note) + "</div></div>";
+    const support = coverageText(feature.key, selected);
+    return "<div class=\"pm-earth-line\"><div><div class=\"pm-label\">" + esc(feature.label) + "</div><div class=\"pm-colname\">" + esc(feature.key) + "</div></div><div class=\"pm-num\">" + esc(shown + note) + "<span class=\"pm-coverage\">" + esc(support) + "</span></div></div>";
   }).join("");
 }
 
@@ -845,12 +988,14 @@ function renderDetail(i) {
   const roleEl = document.getElementById("pm-cell-role");
   const scoreEl = document.getElementById("pm-live-score");
   const kindEl = document.getElementById("pm-score-kind");
+  const confidenceEl = document.getElementById("pm-confidence");
   if (i < 0) {
     idEl.textContent = "No cell selected.";
     coordEl.textContent = "";
     roleEl.textContent = "";
     scoreEl.textContent = "\u2014";
     kindEl.textContent = "June three-feature score";
+    confidenceEl.innerHTML = "Evidence confidence: <strong>LOW</strong> · no selected-cell data";
     renderRows();
     return;
   }
@@ -862,6 +1007,8 @@ function renderDetail(i) {
   if (id === META.site_a.cell_id) role = "Site A. " + META.site_a.name + ".";
   if (id === META.site_b.cell_id) role = "Site B. " + META.site_b.name + ". Atacama hold-out control.";
   roleEl.textContent = role;
+  const present = ["ndvi_median", "precip_median_mm_hr", "lst_night_median_k"].filter((key) => earthValue(key, i) !== null).length;
+  confidenceEl.innerHTML = "Evidence confidence: <strong>LOW</strong> · " + present + "/3 Earth proxy measures present · 0/3 direct planetary referents";
   if (!eligible[i]) {
     scoreEl.textContent = "Not ranked";
     kindEl.textContent = activeFeatures(readWeights()).length
@@ -921,6 +1068,12 @@ function renderList(weights) {
   const list = document.getElementById("pm-ranks");
   const status = document.getElementById("pm-status");
   const use = activeFeatures(weights);
+  const weightStatus = document.getElementById("pm-weight-status");
+  if (weightStatus) {
+    weightStatus.textContent = use.length
+      ? use.length + " of " + META.features.filter((feature) => feature.scored && !feature.all_null).length + " available measured score terms active: " + use.map((feature) => feature.label).join(", ") + ". No confidence estimate."
+      : "No measured score terms active. No cells are ranked.";
+  }
   if (!use.length) {
     list.innerHTML = "";
     status.textContent = "No measured feature has a positive weight. Nothing is ranked.";
@@ -1220,7 +1373,7 @@ async function start() {
   }
   const stream = new Blob([gzipBytes]).stream().pipeThrough(new DecompressionStream("gzip"));
   const raw = new Uint8Array(await new Response(stream).arrayBuffer());
-  if (raw.byteLength !== META.n * 24) {
+  if (raw.byteLength !== META.n * 32) {
     throw new Error("Embedded table length " + raw.byteLength + " does not match " + META.n + " cells.");
   }
   const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
@@ -1234,6 +1387,13 @@ async function start() {
     lst_day_median_k: new Int32Array(n),
     lst_day_night_range_median_k: new Int32Array(n)
   };
+  coverage = {
+    ndvi_median: new Uint8Array(n),
+    precip_median_mm_hr: new Uint8Array(n),
+    lst_night_median_k: new Uint8Array(n),
+    lst_day_median_k: new Uint8Array(n),
+    lst_day_night_range_median_k: new Uint8Array(n)
+  };
   norms = {
     ndvi_median: new Float64Array(n),
     precip_median_mm_hr: new Float64Array(n),
@@ -1241,7 +1401,7 @@ async function start() {
   };
   hold = new Uint8Array(n);
   for (let i = 0; i < n; i += 1) {
-    const offset = i * 24;
+    const offset = i * 32;
     lats[i] = view.getInt16(offset, true);
     lons[i] = view.getInt16(offset + 2, true);
     micros.ndvi_median[i] = view.getInt32(offset + 4, true);
@@ -1249,6 +1409,11 @@ async function start() {
     micros.lst_night_median_k[i] = view.getInt32(offset + 12, true);
     micros.lst_day_median_k[i] = view.getInt32(offset + 16, true);
     micros.lst_day_night_range_median_k[i] = view.getInt32(offset + 20, true);
+    coverage.ndvi_median[i] = view.getUint8(offset + 24);
+    coverage.precip_median_mm_hr[i] = view.getUint8(offset + 25);
+    coverage.lst_night_median_k[i] = view.getUint8(offset + 26);
+    coverage.lst_day_median_k[i] = view.getUint8(offset + 27);
+    coverage.lst_day_night_range_median_k[i] = view.getUint8(offset + 28);
     ["ndvi_median", "precip_median_mm_hr", "lst_night_median_k"].forEach((key) => {
       const micro = micros[key][i];
       norms[key][i] = micro === NULL_I32 ? NaN : rawDistance(key, micro / 1000000) / SCALES[key];
@@ -1298,6 +1463,7 @@ def main() -> None:
         *scorer.FEATURE_ORDER,
         "lst_day_median_k",
         "lst_day_night_range_median_k",
+        *(name for _feature, name, _maximum in COVERAGE_PACK),
     ]
     missing_columns = [name for name in required if name not in frame.columns]
     if missing_columns:
@@ -1334,6 +1500,10 @@ def main() -> None:
     lat_i = pack_tenths(frame["lat_center_deg"])
     lon_i = pack_tenths(frame["lon_center_deg"])
     packed_cols = [pack_micro(frame[name]) for name in MEASURED_PACK]
+    packed_coverage = [
+        pack_coverage(frame[column], maximum)
+        for _feature, column, maximum in COVERAGE_PACK
+    ]
     record = np.empty(
         len(frame),
         dtype=np.dtype(
@@ -1345,6 +1515,12 @@ def main() -> None:
                 ("lst_night", "<i4"),
                 ("lst_day", "<i4"),
                 ("lst_day_night_range", "<i4"),
+                ("ndvi_count", "u1"),
+                ("precip_count", "u1"),
+                ("lst_night_count", "u1"),
+                ("lst_day_count", "u1"),
+                ("lst_day_night_range_count", "u1"),
+                ("reserved", "u1", (3,)),
             ],
             align=False,
         ),
@@ -1358,6 +1534,13 @@ def main() -> None:
     record["lst_night"] = packed_cols[2]
     record["lst_day"] = packed_cols[3]
     record["lst_day_night_range"] = packed_cols[4]
+    for field, values in zip(
+        ("ndvi_count", "precip_count", "lst_night_count", "lst_day_count", "lst_day_night_range_count"),
+        packed_coverage,
+        strict=True,
+    ):
+        record[field] = values
+    record["reserved"] = 0
     raw = record.tobytes()
     compressed = gzip.compress(raw, compresslevel=9, mtime=0)
     if gzip.decompress(compressed) != raw:
@@ -1402,6 +1585,10 @@ def main() -> None:
             }
             for spec in PAGE_FEATURES
         ],
+        "coverage": {
+            feature: {"denominator": maximum}
+            for feature, _column, maximum in COVERAGE_PACK
+        },
         "expected_top": expected_top,
         "expected_control": {
             "id": scorer.cell_id(float(control_row["lat_center_deg"]), float(control_row["lon_center_deg"])),
