@@ -39,7 +39,7 @@ Site A: Kunlun Mountains, 35.3°N, 81.1°E. Site B: Vinchina, 27.9°S, 68.9°W�
 | Three-proxy score (lower is closer) | 0.186845 | **0.167981** |
 | Median slope vs Moon IQR 8.0–16.7° | 7.08° — outside | **9.48° — inside** |
 
-The proxy score and the independent slope check both favor Vinchina among these two. Study it first for a terrain-only mobility rehearsal; keep Kunlun as a lower-slope comparison. Neither is a validated analog.
+The proxy score and the independent slope check both favor Vinchina among these two. Study it first for a terrain-only mobility rehearsal; keep Kunlun as a lower-slope comparison. Positive-NDVI neighbors in Western Kunlun (`36.1_78.3`, 0.195322; `35.7_77.3`, 0.204707) and zero-rain hold-out cells in Sur Lípez, Bolivia (`-22.5_-67.7`, 0.211229; `-20.5_-67.5`, 0.227362) are also pinned on the map for comparison. Neither is a validated analog.
 
 ## Slide 6 — A testable next step
 

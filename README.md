@@ -37,6 +37,8 @@ Night temperature stands alone at 258.8 kelvin at Kunlun and 254.45 kelvin at Vi
 
 Five discovery cells were classed ice-sheet interior on 2024-06-15 and confirmed on 2024-08-15, and were not kept: 73.5°N, 40.5°W; 73.5°N, 40.7°W; 73.9°N, 40.1°W; 73.5°N, 40.9°W; and 74.1°N, 39.9°W.
 
+Because `35.3_81.1` has a slightly negative June NDVI (−0.01995, bare ground with ridgeline snow), a secondary check on the same `src/score.py` distance table inspected nearby positive-NDVI cells in Western Kunlun and additional zero-precipitation cells inside the Atacama-region hold-out box. All of these pins are plotted on [`web/index.html`](web/index.html) and logged in [`results/sources.csv`](results/sources.csv): Western Kunlun `36.1_78.3` (NDVI 0.0108, rain 0.0035 mm/hr, night LST 262.67 K, score 0.195322) and `35.7_77.3` (NDVI 0.00815, rain 0.001 mm/hr, night LST 266.1 K, score 0.204707); the cell immediately southwest of Vinchina at `-28.1_-69.1` (NDVI 0.0056, rain 0.009 mm/hr, night LST 259.65 K, score 0.187750); Sur Lípez in southern Bolivia at `-22.5_-67.7` (NDVI 0.04965, rain 0 mm/hr, night LST 263.77 K, score 0.211229) and `-20.5_-67.5` (NDVI 0.01595, rain 0 mm/hr, night LST 271.44 K, score 0.227362); Brodeur Peninsula on Baffin Island at `71.9_-89.5` (NDVI 0.00745, rain 0.0025 mm/hr, night LST 268.96 K, score 0.217175); and the warmer, lower-elevation Chilean Atacama core at `-22.3_-68.9` (NDVI 0.038, rain 0 mm/hr, night LST 277.14 K, score 0.258254).
+
 ## How to rerun
 
 On the original build machine, `python --version` reported **Python 3.13.9**. Install the packages named in [`requirements.txt`](requirements.txt): `pandas`, `numpy`, `h5py`, `pyhdf`, `rasterio`, `folium`, and `earthaccess`. That file does not pin versions.

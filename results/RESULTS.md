@@ -114,6 +114,20 @@ The case locked in `notes/targets.md` is ground ice. The region is Arcadia Plani
 
 The Earth-side cold and vegetation proxies are 258.8 kelvin and NDVI -0.01995 at Kunlun, and 254.45 kelvin and NDVI 0.00925 at Vinchina. No Mars temperature or vegetation value is in `results/sources.csv`, so these Earth values stand alone. No Earth ice or permafrost layer was used; therefore, no Mars Earth analog is claimed and the Earth ice comparison remains open.
 
+## Additional comparison cells on the map
+
+Because `35.3_81.1` has a small negative June NDVI (`-0.01995`, bare ground with ridgeline snow), seven additional cells from the same `src/score.py` distance table are pinned on `web/index.html` and listed in `results/sources.csv` so a reviewer can compare positive-NDVI bare-rock cells and zero-rain hold-out cells without changing the formula or weights. Local 30 m Copernicus DEM tiles were not processed for these seven cells, so their `slope_median_deg` remains null.
+
+| Cell | Region | NDVI | Precip (mm/hr) | Night LST (K) | Score (`src/score.py`) | Note |
+| --- | --- | --- | --- | --- | --- | --- |
+| `36.1_78.3` | Western Kunlun, Aksai Chin | 0.0108 | 0.0035 | 262.67 | 0.195322 | Positive-NDVI bare-rock neighbor northwest of `35.3_81.1` |
+| `35.7_77.3` | Western Kunlun, Karakoram margin | 0.00815 | 0.001 | 266.1 | 0.204707 | Drier positive-NDVI neighbor in the same range |
+| `-28.1_-69.1` | Southern Puna border | 0.0056 | 0.009 | 259.65 | 0.187750 | Adjacent hold-out cell southwest of Vinchina (`-27.9_-68.9`) |
+| `-22.5_-67.7` | Sur Lípez, Bolivia (Laguna Colorada) | 0.04965 | 0 | 263.77 | 0.211229 | Zero-rain high-Puna cell inside the hold-out box |
+| `-20.5_-67.5` | Nor/Sur Lípez, Bolivia (Uyuni margin) | 0.01595 | 0 | 271.44 | 0.227362 | Zero-rain, lower-NDVI hold-out cell in southern Bolivia |
+| `71.9_-89.5` | Brodeur Peninsula, Baffin Island | 0.00745 | 0.0025 | 268.96 | 0.217175 | High-latitude positive-NDVI carbonate plateau check |
+| `-22.3_-68.9` | Calama basin, Atacama core, Chile | 0.038 | 0 | 277.14 | 0.258254 | Classic lower-elevation Atacama core; warmer night LST |
+
 ## Source rows behind the scores
 
 | Quantity | Value | Unit | Patch longitude | Patch latitude |

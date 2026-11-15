@@ -289,6 +289,86 @@
     <code>results/sources.csv</code>, so these Earth values stand alone.
     No Earth ice or permafrost layer was used; therefore, no Mars Earth
     analog is claimed and the Earth ice comparison remains open.</p>
+    <h2 id="additional-comparison-cells-on-the-map">Additional comparison cells on the map</h2>
+    <p>Because <code>35.3_81.1</code> has a small negative June NDVI (<code>-0.01995</code>, bare ground with ridgeline snow), seven additional cells from the same <code>src/score.py</code> distance table are pinned on <code>web/index.html</code> and listed in <code>results/sources.csv</code> so a reviewer can compare positive-NDVI bare-rock cells and zero-rain hold-out cells without changing the formula or weights. Local 30 m Copernicus DEM tiles were not processed for these seven cells, so their <code>slope_median_deg</code> remains null.</p>
+    <table>
+    <thead>
+    <tr>
+    <th>Cell</th>
+    <th>Region</th>
+    <th>NDVI</th>
+    <th>Precip (mm/hr)</th>
+    <th>Night LST (K)</th>
+    <th>Score (<code>src/score.py</code>)</th>
+    <th>Note</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+    <td><code>36.1_78.3</code></td>
+    <td>Western Kunlun, Aksai Chin</td>
+    <td>0.0108</td>
+    <td>0.0035</td>
+    <td>262.67</td>
+    <td>0.195322</td>
+    <td>Positive-NDVI bare-rock neighbor northwest of <code>35.3_81.1</code></td>
+    </tr>
+    <tr>
+    <td><code>35.7_77.3</code></td>
+    <td>Western Kunlun, Karakoram margin</td>
+    <td>0.00815</td>
+    <td>0.001</td>
+    <td>266.1</td>
+    <td>0.204707</td>
+    <td>Drier positive-NDVI neighbor in the same range</td>
+    </tr>
+    <tr>
+    <td><code>-28.1_-69.1</code></td>
+    <td>Southern Puna border</td>
+    <td>0.0056</td>
+    <td>0.009</td>
+    <td>259.65</td>
+    <td>0.187750</td>
+    <td>Adjacent hold-out cell southwest of Vinchina (<code>-27.9_-68.9</code>)</td>
+    </tr>
+    <tr>
+    <td><code>-22.5_-67.7</code></td>
+    <td>Sur Lípez, Bolivia (Laguna Colorada)</td>
+    <td>0.04965</td>
+    <td>0</td>
+    <td>263.77</td>
+    <td>0.211229</td>
+    <td>Zero-rain high-Puna cell inside the hold-out box</td>
+    </tr>
+    <tr>
+    <td><code>-20.5_-67.5</code></td>
+    <td>Nor/Sur Lípez, Bolivia (Uyuni margin)</td>
+    <td>0.01595</td>
+    <td>0</td>
+    <td>271.44</td>
+    <td>0.227362</td>
+    <td>Zero-rain, lower-NDVI hold-out cell in southern Bolivia</td>
+    </tr>
+    <tr>
+    <td><code>71.9_-89.5</code></td>
+    <td>Brodeur Peninsula, Baffin Island</td>
+    <td>0.00745</td>
+    <td>0.0025</td>
+    <td>268.96</td>
+    <td>0.217175</td>
+    <td>High-latitude positive-NDVI carbonate plateau check</td>
+    </tr>
+    <tr>
+    <td><code>-22.3_-68.9</code></td>
+    <td>Calama basin, Atacama core, Chile</td>
+    <td>0.038</td>
+    <td>0</td>
+    <td>277.14</td>
+    <td>0.258254</td>
+    <td>Classic lower-elevation Atacama core; warmer night LST</td>
+    </tr>
+    </tbody>
+    </table>
     <h2 id="source-rows-behind-the-scores">Source rows behind the
     scores</h2>
     <table>
