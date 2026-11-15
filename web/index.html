@@ -92,9 +92,9 @@
   .pm-tour[hidden] { display: none; }
   .pm-tour-shade { position: fixed; background: rgba(22, 28, 36, 0.46); z-index: 2100; }
   .pm-tour-ring { position: fixed; z-index: 2101; border: 2px solid var(--blue); border-radius: 12px; pointer-events: none; }
-  .pm-tour-card { position: fixed; z-index: 2102; width: min(380px, calc(100vw - 32px)); background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  .pm-tour-card h2 { font-size: 18px; margin: 4px 0 8px; }
-  .pm-tour-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 16px; }
+  .pm-tour-card { position: fixed; z-index: 2102; width: min(360px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; background: var(--card); color: var(--ink); border: 1px solid #b9d4f6; box-shadow: 0 10px 28px rgba(18, 40, 70, 0.22); border-radius: 12px; padding: 13px 15px; font-size: 13.5px; line-height: 1.4; }
+  .pm-tour-card h2 { font-size: 16px; margin: 2px 0 6px; }
+  .pm-tour-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; }
   .pm-tour-nav { display: flex; gap: 8px; }
   @media (max-width: 980px) {
     html, body { height: auto; overflow: auto; }
@@ -104,97 +104,92 @@
     .pm-earth-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .pm-note { grid-column: 1 / -1; }
   }
-  /* Compact mission dashboard: targets and data stay visible beside the map. */
+  /* Compact one-page mission dashboard: zero internal scroll on desktop/laptop screens. */
   @media (min-width: 981px) {
     html, body { height: 100%; overflow: hidden; }
-    .pm-app { height: 100dvh; grid-template-columns: minmax(0, 0.88fr) minmax(600px, 1.12fr); grid-template-rows: 82px minmax(0, 1fr); }
-    .pm-banner { align-items: center; flex-wrap: nowrap; padding: 8px 14px; gap: 14px; }
-    .pm-lead { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr); gap: 2px 12px; align-items: center; }
-    .pm-sentence { font-size: 13px; font-weight: 600; }
-    .pm-lead .pm-quiet { margin: 0; font-size: 11px; }
-    #pm-check { grid-column: 1 / -1; font-size: 11px; margin: 0; }
+    .pm-app { height: 100dvh; grid-template-columns: minmax(0, 0.88fr) minmax(600px, 1.12fr); grid-template-rows: auto minmax(0, 1fr); }
+    .pm-banner { align-items: center; flex-wrap: nowrap; padding: 6px 14px; gap: 12px; }
+    .pm-banner h1 { font-size: 18px; white-space: nowrap; }
+    .pm-lead { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.85fr); gap: 1px 12px; align-items: center; }
+    .pm-sentence { font-size: 12.5px; font-weight: 600; line-height: 1.2; }
+    .pm-lead .pm-quiet { margin: 0; font-size: 10.5px; line-height: 1.2; }
+    #pm-check { grid-column: 1 / -1; font-size: 10.5px; margin: 0; line-height: 1.2; }
     .pm-links { display: flex; gap: 9px; white-space: nowrap; }
     .pm-links a { color: var(--blue); font-size: 11px; font-weight: 600; text-decoration: none; }
     .pm-links a:hover { text-decoration: underline; }
     .pm-map-cell { min-height: 0; }
-    .pm-side { min-height: 0; overflow: hidden; padding: 8px; border-left: 1px solid var(--line); display: grid; grid-template-rows: minmax(0, 1fr) 224px; gap: 8px; position: relative; }
-    .pm-card { border-radius: 10px; padding: 10px; margin: 0; }
-    #pm-selected { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 5px; }
-    #pm-selected > h2 { font-size: 14px; }
-    .pm-id { margin-top: 0; font-size: 12px; }
-    .pm-coord { font-size: 11px; }
-    #pm-cell-role { color: var(--muted); font-size: 11px; line-height: 1.25; }
-    .pm-scoreline { min-height: 0; margin-top: 0; gap: 7px; }
-    .pm-score { font-size: 18px; }
-    #pm-score-kind { font-size: 11px; }
-    .pm-section-kicker { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
-    .pm-target-lock-note { color: var(--muted); font-size: 9px; line-height: 1.15; }
-    .pm-weight-status { margin-top: 7px; padding: 7px 9px; border-radius: 7px; color: #174579; background: var(--blue-soft); font-size: 11px; }
-    #pm-earth { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
-    .pm-earth-line { min-width: 0; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: #f8fafc; font-size: 9px; }
+    .pm-hud { top: 8px; left: 8px; gap: 5px; max-width: calc(100% - 16px); }
+    .pm-hud .pm-btn { padding: 5px 9px; font-size: 12px; border-radius: 9px; }
+    .pm-side { min-height: 0; overflow: hidden; padding: 6px 8px; border-left: 1px solid var(--line); display: grid; grid-template-rows: minmax(0, 1fr) 172px; gap: 6px; position: relative; }
+    .pm-card { border-radius: 10px; padding: 8px 10px; margin: 0; }
+    #pm-selected { min-height: 0; overflow: hidden; display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto; gap: 2px 8px; align-items: baseline; }
+    #pm-selected > h2 { grid-column: 1; grid-row: 1; font-size: 13px; }
+    #pm-selected > .pm-id { grid-column: 2; grid-row: 1; margin-top: 0; font-size: 11.5px; font-weight: 600; color: var(--blue); }
+    #pm-selected > .pm-coord { grid-column: 3; grid-row: 1; font-size: 11px; color: var(--muted); }
+    #pm-cell-role { grid-column: 4; grid-row: 1; color: var(--muted); font-size: 11px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-scoreline { grid-column: 1 / 3; grid-row: 2; min-height: 0; margin-top: 0; gap: 6px; }
+    .pm-score { font-size: 16px; }
+    #pm-score-kind { font-size: 10.5px; }
+    #pm-probability { grid-column: 3; grid-row: 2; margin: 0; font-size: 10px; white-space: nowrap; }
+    #pm-confidence { grid-column: 4; grid-row: 2; margin: 0; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-baseline { grid-column: 1 / -1; grid-row: 3; margin: 0; padding: 3px 6px; font-size: 9.5px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-section-kicker { grid-column: 1 / -1; grid-row: 4; color: var(--muted); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; line-height: 1.1; margin-top: 1px; }
+    .pm-target-lock-note { display: none; }
+    .pm-weight-status { margin-top: 6px; padding: 6px 8px; border-radius: 7px; color: #174579; background: var(--blue-soft); font-size: 11px; }
+    #pm-earth { grid-column: 1 / -1; grid-row: 5; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+    .pm-earth-line { min-width: 0; padding: 3px 5px; border: 1px solid var(--line); border-radius: 6px; background: #f8fafc; font-size: 9px; display: block; }
     .pm-earth-line.is-scored { background: #f0f6ff; border-color: #d7e6f9; }
-    .pm-earth-head { display: flex; align-items: center; justify-content: space-between; gap: 3px; }
-    .pm-earth-line .pm-label { font-size: 9px; line-height: 1.1; }
-    .pm-measure-tag { color: var(--blue); font-size: 7px; font-weight: 700; letter-spacing: .04em; }
+    .pm-earth-head { display: flex; align-items: center; justify-content: space-between; gap: 2px; }
+    .pm-earth-line .pm-label { font-size: 8.5px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-measure-tag { color: var(--blue); font-size: 6.5px; font-weight: 700; letter-spacing: .03em; }
     .pm-earth-line .pm-colname { display: none; }
-    .pm-earth-line .pm-num { margin-top: 1px; font-size: 10px; white-space: nowrap; }
-    .pm-coverage { display: inline; margin-left: 4px; color: var(--muted); font-family: "Segoe UI", Arial, sans-serif; font-size: 8px; }
+    .pm-earth-line .pm-num { margin-top: 1px; font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: auto; border: 0; padding: 0; background: transparent; text-align: left; }
+    .pm-coverage { display: inline; margin-left: 3px; color: var(--muted); font-family: "Segoe UI", Arial, sans-serif; font-size: 7.5px; }
     .pm-coverage-note { display: none; }
-    .pm-baseline { margin: 1px 0 3px; padding: 4px 6px; font-size: 9px; }
-    .pm-detail-grid { min-height: 0; flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-    .pm-block { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; padding: 7px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd; }
+    .pm-detail-grid { grid-column: 1 / -1; grid-row: 6; min-height: 0; align-self: stretch; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .pm-block { min-width: 0; min-height: 0; overflow: hidden; display: flex; flex-direction: column; margin: 0; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfd; }
     .pm-target-heading { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
-    .pm-block h3 { color: var(--ink); font-size: 11px; }
-    .pm-fixed { color: var(--blue); font-size: 9px; font-weight: 700; letter-spacing: .06em; }
-    .pm-place { margin-top: 2px; font-size: 11px; line-height: 1.2; }
-    .pm-block > .pm-coord { margin-top: 1px; white-space: nowrap; }
-    .pm-block-content { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
-    .pm-target-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .82fr); gap: 4px; margin-top: 4px; padding: 3px 0; color: var(--muted); font-size: 8px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--line); }
-    .pm-row { grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr); gap: 4px; padding: 4px 0; font-size: 10px; line-height: 1.2; }
+    .pm-block h3 { color: var(--ink); font-size: 11px; line-height: 1.15; }
+    .pm-fixed { color: var(--blue); font-size: 8.5px; font-weight: 700; letter-spacing: .06em; }
+    .pm-place { margin-top: 1px; font-size: 10px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pm-block > .pm-coord { margin-top: 0; font-size: 9.5px; line-height: 1.15; white-space: nowrap; }
+    .pm-block-content { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
+    .pm-target-columns { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 4px; margin-top: 3px; padding: 2px 0; color: var(--muted); font-size: 8px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+    .pm-row { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 4px; padding: 2.5px 0; font-size: 9.5px; line-height: 1.15; align-items: baseline; }
     .pm-row-feature { grid-column: auto; }
-    .pm-row .pm-label { font-size: 10px; }
+    .pm-row .pm-label { font-size: 9.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pm-row .pm-colname { display: none; }
-    .pm-target-value { font-size: 10px; font-weight: 600; }
-    .pm-status-chip { display: block; color: var(--muted); font-size: 9px; }
-    .pm-minerals, .pm-limit { margin-top: 4px; font-size: 10px; line-height: 1.2; }
-    .pm-bottom { display: grid; grid-template-columns: minmax(165px, .72fr) minmax(0, 1.28fr); gap: 8px; min-height: 0; }
-    .pm-stats { grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 6px; }
-    .pm-stat { padding: 7px 9px; gap: 1px; }
-    .pm-stat strong { font-size: 12px; }
-    .pm-stat-score { font-size: 16px; }
-    .pm-stat .pm-kicker { font-size: 10px; }
-    .pm-stat .pm-coord { font-size: 10px; }
-    .pm-bottom > section { min-height: 0; overflow: hidden; }
-    .pm-bottom > section h2 { font-size: 13px; }
-    #pm-status { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px; line-height: 1.2; margin-top: 3px; }
-    .pm-ranks { grid-template-columns: 1fr; gap: 3px; margin-top: 5px; }
-    .pm-ranks button { grid-template-columns: 18px minmax(0, 1fr) auto; gap: 4px; padding: 4px 6px; border-radius: 6px; font-size: 10px; }
-    .pm-ranks .pm-id { font-size: 10px; }
-    .pm-list-score { font-size: 10px; }
-    .pm-hint { font-size: 10px; line-height: 1.2; }
-    .pm-bottom .pm-hint { margin-top: 3px; }
-    #pm-weights { position: fixed; z-index: 1400; right: 14px; bottom: 14px; width: min(430px, calc(100vw - 28px)); max-height: calc(100dvh - 28px); overflow: auto; padding: 0; border-color: #b9d4f6; box-shadow: 0 8px 30px rgba(18, 40, 70, .2); }
-    #pm-weights > summary { padding: 10px 14px; color: white; background: var(--blue); border-radius: 9px; list-style-position: inside; font-size: 12px; }
-    #pm-weights[open] > summary { border-radius: 9px 9px 0 0; }
+    .pm-target-value { display: inline; font-size: 9.5px; font-weight: 600; }
+    .pm-status-chip { display: inline; margin-left: 4px; color: var(--muted); font-size: 8.5px; }
+    .pm-minerals { margin-top: 2px; font-size: 9px; line-height: 1.15; }
+    .pm-limit { grid-column: 1 / -1; grid-row: 7; margin-top: 1px; font-size: 9.5px; line-height: 1.15; }
+    .pm-bottom { display: grid; grid-template-columns: minmax(165px, .68fr) minmax(0, 1.32fr); gap: 6px; min-height: 0; }
+    .pm-stats { grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 5px; }
+    .pm-stat { padding: 5px 8px; gap: 1px; }
+    .pm-stat strong { font-size: 11.5px; line-height: 1.15; }
+    .pm-stat-score { font-size: 14.5px; line-height: 1.15; }
+    .pm-stat .pm-kicker { font-size: 9.5px; line-height: 1.1; }
+    .pm-stat .pm-coord { font-size: 9.5px; line-height: 1.1; }
+    .pm-bottom > section { min-height: 0; overflow: hidden; padding: 6px 9px; }
+    .pm-bottom > section h2 { font-size: 12px; line-height: 1.15; }
+    #pm-status { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-size: 9.5px; line-height: 1.15; margin-top: 1px; }
+    .pm-ranks { grid-template-columns: 1fr; gap: 2px; margin-top: 3px; }
+    .pm-ranks button { grid-template-columns: 16px minmax(0, 1fr) auto; gap: 4px; padding: 2px 6px; border-radius: 5px; font-size: 9.5px; line-height: 1.2; }
+    .pm-ranks .pm-id { font-size: 9.5px; }
+    .pm-list-score { font-size: 9.5px; }
+    .pm-hint { font-size: 9px; line-height: 1.15; }
+    .pm-bottom .pm-hint { margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+    #pm-weights { position: fixed; z-index: 1400; right: 14px; bottom: 10px; width: min(430px, calc(100vw - 28px)); max-height: calc(100dvh - 20px); overflow: auto; padding: 0; border-color: #b9d4f6; box-shadow: 0 8px 30px rgba(18, 40, 70, .2); }
+    #pm-weights > summary { padding: 7px 12px; color: white; background: var(--blue); border-radius: 8px; list-style-position: inside; font-size: 11.5px; }
+    #pm-weights[open] > summary { border-radius: 8px 8px 0 0; }
     .pm-weight-panel { padding: 12px; }
     .pm-weight { padding: 6px 0; }
     .pm-weight-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
-    @media (max-height: 760px) {
-      .pm-app { grid-template-rows: 70px minmax(0, 1fr); }
-      .pm-side { grid-template-rows: minmax(0, 1fr) 210px; padding: 6px; gap: 6px; }
-      #pm-selected { gap: 3px; padding: 8px; overflow-y: auto; }
-      .pm-row { padding: 3px 0; }
-      .pm-stat { padding: 5px 7px; }
-      .pm-ranks button { padding: 2px 4px; font-size: 9px; }
-      .pm-ranks .pm-id, .pm-list-score { font-size: 9px; }
-      #pm-status { -webkit-line-clamp: 1; }
-      .pm-bottom .pm-hint { font-size: 9px; }
-    }
   }
   @media (min-width: 981px) and (max-width: 1220px) {
     .pm-app { grid-template-columns: minmax(0, .72fr) minmax(600px, 1.28fr); }
-    .pm-hud { gap: 5px; }
-    .pm-hud .pm-btn { padding: 6px 8px; font-size: 11px; }
+    .pm-hud { gap: 4px; }
+    .pm-hud .pm-btn { padding: 4px 7px; font-size: 11px; }
   }
   @media (max-width: 980px) {
     .pm-banner { padding: 10px 12px; }
@@ -934,11 +929,11 @@ function bindChrome() {
 
 function setupTour() {
   const steps = [
-    { sel: ".pm-stats", title: "Start with the finding", body: "Among these two sites, Vinchina has the lower three-proxy score (0.167981 vs 0.186845) and its later-measured 9.48° median slope is inside the lunar 8.0–16.7° band. Kunlun's 7.08° slope is below it. Consider Vinchina for a terrain-only mobility study, subject to access and safety checks—not as a validated analog." },
-    { sel: "#pm-selected", title: "Check the evidence", body: "Only NDVI, precipitation, and night surface temperature were scored. They are one-month Earth proxies; none has a direct Moon or Mars referent in the source table. Pixel counts show support, not confidence in mission success." },
-    { sel: ".pm-moon", title: "Find the limits", body: "Slope is a later patch measurement, not part of either published score. Bramson et al. (2015) provide radar evidence for ground ice at the Mars target, but we used no Earth ice/permafrost layer, so no Earth ice analog is identified. Earth cannot reproduce lunar or Martian gravity, atmosphere, radiation, or a permanently shadowed lunar thermal environment." },
+    { sel: ".pm-stats", title: "Start with the finding", body: "Vinchina has the lower three-proxy distance (0.167981 vs 0.186845) and its 9.48° patch slope sits inside the 8.0–16.7° lunar band, while Kunlun (7.08°) sits below it. Use Vinchina first for a terrain-only mobility study." },
+    { sel: "#pm-selected", title: "Check the evidence", body: "Only NDVI, precipitation, and night surface temperature are scored. They are one-month Earth proxies; pixel counts show data support, not mission success probability." },
+    { sel: ".pm-moon", title: "Find the limits", body: "Slope is a local patch check, and no Earth ice or permafrost layer was scored against the Mars radar-ice target. Earth cannot copy lunar or Martian gravity, thin air, radiation, or <110 K polar cold traps." },
     { sel: ".pm-links", title: "Trace the claims", body: "Open Dossiers for the full site comparison, Method for the formula, Data log for inputs, and Validation for what has—and has not—been checked." },
-    { sel: "#pm-ranks", title: "Explore if needed", body: "The project pairs a global screen with an Atacama-region hold-out comparator, a separate lunar-slope check, and a testable mobility-study proposal. The distance formula is conventional. Use the map to navigate evidence; changing weights does not validate a candidate." }
+    { sel: "#pm-ranks", title: "Explore if needed", body: "Click any ranked row or map pin (including Western Kunlun and Sur Lípez) to inspect its measurements, or open Customize score to test weight sensitivity." }
   ];
   const root = document.getElementById("pm-tour");
   const card = document.getElementById("pm-tour-card");
@@ -956,12 +951,12 @@ function setupTour() {
   function place(el) {
     el.scrollIntoView({ block: "nearest", inline: "nearest" });
     const rect = el.getBoundingClientRect();
-    const pad = 8;
+    const pad = 6;
     const box = {
-      left: Math.max(8, rect.left - pad),
-      top: Math.max(8, rect.top - pad),
-      right: Math.min(window.innerWidth - 8, rect.right + pad),
-      bottom: Math.min(window.innerHeight - 8, rect.bottom + pad)
+      left: Math.max(6, rect.left - pad),
+      top: Math.max(6, rect.top - pad),
+      right: Math.min(window.innerWidth - 6, rect.right + pad),
+      bottom: Math.min(window.innerHeight - 6, rect.bottom + pad)
     };
     box.width = Math.max(24, box.right - box.left);
     box.height = Math.max(24, box.bottom - box.top);
@@ -973,14 +968,27 @@ function setupTour() {
     ring.style.top = box.top + "px";
     ring.style.width = box.width + "px";
     ring.style.height = box.height + "px";
-    const cardWidth = Math.min(380, window.innerWidth - 32);
-    let left = box.left;
-    let top = box.bottom + 12;
-    if (top + 180 > window.innerHeight) top = Math.max(12, box.top - 190);
-    if (left + cardWidth > window.innerWidth - 12) left = window.innerWidth - cardWidth - 12;
+    const cardWidth = Math.min(350, window.innerWidth - 24);
     card.style.width = cardWidth + "px";
-    card.style.left = Math.max(12, left) + "px";
-    card.style.top = top + "px";
+    const cardHeight = card.offsetHeight || 200;
+    const margin = 12;
+    let left = Math.min(Math.max(margin, box.left), window.innerWidth - cardWidth - margin);
+    let top = box.bottom + margin;
+    if (box.bottom + margin + cardHeight <= window.innerHeight - margin) {
+      top = box.bottom + margin;
+    } else if (box.top - margin - cardHeight >= margin) {
+      top = box.top - margin - cardHeight;
+    } else if (box.left - margin - cardWidth >= margin) {
+      left = box.left - margin - cardWidth;
+      top = Math.min(Math.max(margin, box.top), window.innerHeight - cardHeight - margin);
+    } else if (box.right + margin + cardWidth <= window.innerWidth - margin) {
+      left = box.right + margin;
+      top = Math.min(Math.max(margin, box.top), window.innerHeight - cardHeight - margin);
+    } else {
+      top = Math.max(margin, window.innerHeight - cardHeight - margin);
+    }
+    card.style.left = Math.round(left) + "px";
+    card.style.top = Math.round(top) + "px";
   }
 
   function show(next) {
