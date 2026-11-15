@@ -1,0 +1,13 @@
+site,tier,kind,n_pixels,n_kept,median_k,baseline_score,qc_score,delta_score,status
+Kunlun,T0,primary,16,16,258.8,0.186845,0.186845,0.0,OK
+Kunlun,T1,primary,16,16,258.8,0.186845,0.186845,0.0,OK
+Kunlun,T2,primary,16,16,258.8,0.186845,0.186845,0.0,OK
+Kunlun,T4,primary,16,2,262.68,0.186845,0.201849,0.015004,LOW_SUPPORT
+Kunlun,T5,primary,16,10,256.81,0.186845,0.17915,-0.007695,OK
+Kunlun,X1,exploratory,16,16,258.8,0.186845,0.186845,0.0,OK
+Vinchina,T0,primary,16,16,254.45,0.167981,0.167981,0.0,OK
+Vinchina,T1,primary,16,16,254.45,0.167981,0.167981,0.0,OK
+Vinchina,T2,primary,16,16,254.45,0.167981,0.167981,0.0,OK
+Vinchina,T4,primary,16,15,254.52,0.167981,0.168252,0.000271,OK
+Vinchina,T5,primary,16,0,,0.167981,,,UNAVAILABLE
+Vinchina,X1,exploratory,16,16,254.45,0.167981,0.167981,0.0,OK

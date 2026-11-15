@@ -1,0 +1,472 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partial Match — QC Robustness</title>
+
+  <link rel="stylesheet" href="../web/evidence.css">
+
+  <style>
+    /* Allow this page to use the full browser width */
+body {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.evidence-nav {
+  width: calc(100% - 64px);
+  max-width: 1500px;
+  box-sizing: border-box;
+  margin: 28px auto;
+}
+
+main.qc-page {
+  width: calc(100% - 64px);
+  max-width: 1500px;
+  margin: 28px auto;
+  box-sizing: border-box;
+}
+    /* Layout for the QC page only */
+    main.qc-page {
+      width: calc(100% - 40px);
+      max-width: 1440px;
+      margin: 28px auto;
+      padding: 28px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-sizing: border-box;
+    }
+
+    .qc-intro {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 28px;
+      margin-bottom: 28px;
+    }
+
+    .qc-intro-text {
+      flex: 1;
+    }
+
+    .qc-purpose {
+      width: 280px;
+      flex-shrink: 0;
+      padding: 16px;
+      border: 1px solid #dbe2ea;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .qc-grid-top {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .qc-grid-results {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .qc-grid-bottom {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 18px;
+    }
+
+    .qc-panel {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid #dbe2ea;
+      border-radius: 9px;
+      background: #ffffff;
+    }
+
+    .qc-panel h2,
+    .qc-panel h3 {
+      margin-top: 0;
+    }
+
+    .qc-panel p {
+      margin-bottom: 14px;
+    }
+
+    .qc-panel table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .qc-panel th,
+    .qc-panel td {
+      padding: 9px 10px;
+      border: 1px solid #dce2e9;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .qc-panel th {
+      background: #f3f5f8;
+      font-weight: 650;
+    }
+
+    .qc-panel tbody tr:nth-child(even) {
+      background: #fafbfc;
+    }
+
+    .qc-panel ul {
+      padding-left: 22px;
+    }
+
+    .qc-panel li {
+      margin-bottom: 9px;
+    }
+
+    .qc-note {
+      color: #526174;
+      font-size: 0.9rem;
+    }
+
+    .qc-table-wrap {
+      overflow-x: auto;
+    }
+
+    @media (max-width: 1000px) {
+      .qc-grid-results {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      main.qc-page {
+        width: calc(100% - 20px);
+        padding: 16px;
+      }
+
+      .qc-intro,
+      .qc-grid-top,
+      .qc-grid-results,
+      .qc-grid-bottom {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .qc-purpose {
+        width: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="evidence-nav" aria-label="Evidence pages">
+    <a href="../web/index.html">Dashboard</a>
+    <a href="../results/RESULTS.html">Dossiers</a>
+    <a href="../results/score-notes.html">Method</a>
+    <a href="data-log.html">Data log</a>
+    <a href="credibility.html">Validation</a>
+    <a href="qc-robustness.html" aria-current="page">QC Robustness</a>
+  </nav>
+
+  <main class="qc-page">
+
+    <!-- Introduction -->
+    <section class="qc-intro">
+      <div class="qc-intro-text">
+        <h1>MODIS Quality Control (QC) Robustness</h1>
+        <p>
+          This analysis tests how applying MODIS MOD11C3 quality-control
+          filters affects nighttime land surface temperature (LST) and
+          the original site scores for Kunlun (Site A) and Vinchina
+          (Site B), using June 2024 data.
+        </p>
+      </div>
+
+      <aside class="qc-purpose">
+        <strong>Purpose</strong>
+        <p>
+          Assess the robustness of the results to different QC filtering
+          choices without changing the original scoring method.
+        </p>
+      </aside>
+    </section>
+
+    <!-- QC definitions and filtering tiers -->
+    <section class="qc-grid-top">
+
+      <article class="qc-panel">
+        <h2>1. What the MODIS QC Bits Mean</h2>
+        <p>
+          MOD11C3 includes a quality-control flag for each pixel.
+          The relevant bits describe the quality of the LST retrieval.
+        </p>
+
+        <div class="qc-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>QC bits</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>0–1</td>
+                <td>Mandatory QA: 0 = good LST, 1 = other quality,
+                2 = not produced due to cloud, 3 = not produced for
+                another reason.</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>L1B input data quality: 0 = good, 1 = other.</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Terra/Aqua combined-use flag. Provenance information,
+                not a quality grade.</td>
+              </tr>
+              <tr>
+                <td>4–5</td>
+                <td>Emissivity consistency category. Category 3 is
+                the least consistent.</td>
+              </tr>
+              <tr>
+                <td>6–7</td>
+                <td>Estimated LST error: 0 = ≤1 K, 1 = ≤2 K,
+                2 = ≤3 K, 3 = &gt;3 K.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="qc-note">
+          These are algorithm-estimated categories, not direct
+          measurements of actual temperature accuracy. QC flags
+          must also be interpreted alongside LST validity.
+        </p>
+      </article>
+
+      <article class="qc-panel">
+        <h2>2. QC Filtering Tiers</h2>
+        <p>
+          Six configurations were evaluated, from the unfiltered
+          baseline to stricter quality requirements.
+        </p>
+
+        <div class="qc-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Filter description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>T0</strong></td>
+                <td>Valid LST pixels only (baseline).</td>
+              </tr>
+              <tr>
+                <td><strong>T1</strong></td>
+                <td>T0 plus mandatory QA categories 0 or 1.</td>
+              </tr>
+              <tr>
+                <td><strong>T2</strong></td>
+                <td>T1 plus estimated LST error category ≤1 (≤2 K).</td>
+              </tr>
+              <tr>
+                <td><strong>T4</strong></td>
+                <td>T1 plus estimated LST error category 0 (≤1 K).</td>
+              </tr>
+              <tr>
+                <td><strong>T5</strong></td>
+                <td>T1 plus good L1B input data quality (bit 2 = 0).</td>
+              </tr>
+              <tr>
+                <td><strong>X1</strong></td>
+                <td>Exploratory: T2 plus emissivity consistency
+                category not equal to 3.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="qc-note">
+          T4 and T5 are alternative stricter filters, not sequential
+          stages. X1 is exploratory. T3 was retired because its
+          original interpretation of the emissivity bits was incorrect.
+        </p>
+      </article>
+
+    </section>
+
+    <!-- Numerical results -->
+    <section class="qc-grid-results">
+
+      <article class="qc-panel">
+        <h2>3. Pixel Retention</h2>
+        <p class="qc-note">Number of pixels retained out of 16.</p>
+
+        <div class="qc-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Kunlun</th>
+                <th>Vinchina</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>T0</td><td>16 / 16</td><td>16 / 16</td></tr>
+              <tr><td>T1</td><td>16 / 16</td><td>16 / 16</td></tr>
+              <tr><td>T2</td><td>16 / 16</td><td>16 / 16</td></tr>
+              <tr><td>T4</td><td>2 / 16</td><td>15 / 16</td></tr>
+              <tr><td>T5</td><td>10 / 16</td><td>0 / 16</td></tr>
+              <tr><td>X1</td><td>16 / 16</td><td>16 / 16</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="qc-panel">
+        <h2>4. Nighttime LST Medians (K)</h2>
+        <p class="qc-note">
+          Median nighttime land surface temperature for each tier.
+        </p>
+
+        <div class="qc-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tier</th>
+                <th>Kunlun</th>
+                <th>Vinchina</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>T0</td><td>258.80</td><td>254.45</td></tr>
+              <tr><td>T1</td><td>258.80</td><td>254.45</td></tr>
+              <tr><td>T2</td><td>258.80</td><td>254.45</td></tr>
+              <tr><td>T4</td><td>262.68</td><td>254.52</td></tr>
+              <tr><td>T5</td><td>256.81</td><td>—</td></tr>
+              <tr><td>X1</td><td>258.80</td><td>254.45</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="qc-panel">
+        <h2>5. Score Sensitivity</h2>
+        <p class="qc-note">
+          Original score versus QC-adjusted score.
+          Lower scores are closer to the original proxy target.
+        </p>
+
+<div class="qc-table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Site</th>
+        <th>Tier</th>
+        <th>Original score</th>
+        <th>QC score</th>
+        <th>Δ (QC − Original)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Kunlun</td><td>T0</td><td>0.186845</td><td>0.186845</td><td>0.000000</td></tr>
+      <tr><td>Kunlun</td><td>T1</td><td>0.186845</td><td>0.186845</td><td>0.000000</td></tr>
+      <tr><td>Kunlun</td><td>T2</td><td>0.186845</td><td>0.186845</td><td>0.000000</td></tr>
+      <tr><td>Kunlun</td><td>T4</td><td>0.186845</td><td>0.201849</td><td>+0.015004</td></tr>
+      <tr><td>Kunlun</td><td>T5</td><td>0.186845</td><td>0.179150</td><td>−0.007695</td></tr>
+      <tr><td>Kunlun</td><td>X1</td><td>0.186845</td><td>0.186845</td><td>0.000000</td></tr>
+      <tr><td>Vinchina</td><td>T0</td><td>0.167981</td><td>0.167981</td><td>0.000000</td></tr>
+      <tr><td>Vinchina</td><td>T1</td><td>0.167981</td><td>0.167981</td><td>0.000000</td></tr>
+      <tr><td>Vinchina</td><td>T2</td><td>0.167981</td><td>0.167981</td><td>0.000000</td></tr>
+      <tr><td>Vinchina</td><td>T4</td><td>0.167981</td><td>0.168252</td><td>+0.000271</td></tr>
+      <tr><td>Vinchina</td><td>T5</td><td>0.167981</td><td>Unavailable</td><td>—</td></tr>
+      <tr><td>Vinchina</td><td>X1</td><td>0.167981</td><td>0.167981</td><td>0.000000</td></tr>
+    </tbody>
+  </table>
+</div>
+
+        <p class="qc-note">
+          T1, T2 and X1 retain the baseline scores for both sites.
+          The full results are available in the project CSV report.
+        </p>
+      </article>
+
+    </section>
+
+    <!-- Findings and limitations -->
+    <section class="qc-grid-bottom">
+
+      <article class="qc-panel">
+        <h2>Key Findings</h2>
+        <ul>
+          <li>
+            T1, T2 and X1 do not change either site's median.
+            All 16 pixels are retained.
+          </li>
+          <li>
+            T4 changes the Kunlun median from 258.80 K to
+            262.68 K and increases its score, but only 2 of
+            16 pixels remain.
+          </li>
+          <li>
+            T5 leaves Vinchina with zero retained pixels,
+            making a two-site comparison impossible.
+          </li>
+        </ul>
+      </article>
+
+      <article class="qc-panel">
+        <h2>Limitations</h2>
+        <ul>
+          <li>
+            The Kunlun T4 result has low pixel support (2 of 16).
+            The Vinchina T5 result is unavailable (0 of 16).
+          </li>
+          <li>
+            The analysis uses June 2024 only, not a full climatology.
+          </li>
+          <li>
+            QC categories are algorithm estimates, not proof
+            of actual temperature accuracy.
+          </li>
+          <li>
+            The analysis does not establish which filter is most
+            accurate or which site is more suitable for a Mars mission.
+          </li>
+        </ul>
+      </article>
+
+    </section>
+    <section class="qc-panel" style="margin-top: 22px;">
+  <h2>Data and Methodology</h2>
+  <p>
+    Supporting datasets, calculations and QC definitions are
+    provided below for reproducibility.
+  </p>
+  <ul>
+    <li><a href="qc-robustness-bit-definitions.md">MODIS QC bit definitions and filtering methodology</a></li>
+    <li><a href="../results/qc_robustness/score_sensitivity_june2024.md">Complete June 2024 QC score sensitivity report</a></li>
+    <li><a href="../results/qc_robustness/site_tiers_june2024.csv">Site-level pixel retention and LST results (CSV)</a></li>
+    <li><a href="../results/qc_robustness/score_sensitivity_june2024.csv">Complete score sensitivity results (CSV)</a></li>
+    <li><a href="../results/qc_robustness/site_gap_june2024.csv">Site comparison gap results (CSV)</a></li>
+    <li><a href="../results/qc_robustness/site_pixels_june2024.csv">Individual pixel-level QC results (CSV)</a></li>
+  </ul>
+</section>
+
+  </main>
+</body>
+</html>
