@@ -27,7 +27,7 @@ SOURCE_FEATURES = {
         "valid_count": "ndvi_valid_count",
         "minimum_pixels": 8,
         "maximum_pixels": 16,
-        "mean": "ndvi_annual_mean_10y",
+        "mean": "ndvi_multi_year_mean",
         "std": "ndvi_interannual_sd",
         "seasonal_low": "ndvi_typical_monthly_min",
         "seasonal_high": "ndvi_typical_monthly_max",
@@ -39,7 +39,7 @@ SOURCE_FEATURES = {
         "valid_count": "precip_valid_count",
         "minimum_pixels": 2,
         "maximum_pixels": 4,
-        "mean": "precip_annual_mean_rate_mm_hr_10y",
+        "mean": "precip_multi_year_mean_rate_mm_hr",
         "std": "precip_interannual_sd_mm_hr",
         "seasonal_low": "precip_typical_monthly_min_rate_mm_hr",
         "seasonal_high": "precip_typical_monthly_max_rate_mm_hr",
@@ -51,7 +51,7 @@ SOURCE_FEATURES = {
         "valid_count": "lst_night_valid_count",
         "minimum_pixels": 8,
         "maximum_pixels": 16,
-        "mean": "lst_night_annual_mean_k_10y",
+        "mean": "lst_night_multi_year_mean_k",
         "std": "lst_night_interannual_sd_k",
         "seasonal_low": "lst_night_coldest_month_mean_k",
         "seasonal_high": "lst_night_warmest_month_mean_k",
@@ -333,7 +333,7 @@ def build_climatology(
         output[names["pixels"]] = mean_pixels
 
     metadata = {
-        "method_version": "annualized-grid-v1",
+        "method_version": "annualized-grid-v2",
         "period": {"start_year": start_year, "end_year": end_year},
         "annualization": "calendar-day-weighted mean of monthly cell medians/rates",
         "minimum_valid_months_per_year": min_months_per_year,

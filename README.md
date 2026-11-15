@@ -6,7 +6,7 @@ The score is a partial match on measured features, not a probability of mission 
 
 This is a heuristic screening index: the three scored Earth features have no direct Moon or Mars referent in the cited source table. The target values are explicit proxies, not planetary measurements. June 2024 is one month, not a climate normal.
 
-A separate multi-year path now supports monthly inputs, annualized 10-year features, seasonal extremes, and interannual variability. It does **not** replace the published June baseline. Only June 2024 is available locally, so no 10-year score or new ranking has been produced.
+A separate multi-year path supports monthly inputs, period-neutral annualized features, seasonal extremes, and interannual variability. It does **not** replace the published June baseline. The selected extension is five complete years, 2019–2023. CMR metadata lists all 180 required granules (about 10.91 GiB), but the authenticated files have not yet been downloaded, so no multi-year score or ranking is available.
 
 The page a judge opens is [`web/index.html`](web/index.html). It keeps the map and selection details in the existing no-page-scroll desktop layout. Double-click the file, or open it from the repository root on GitHub Pages.
 
@@ -39,7 +39,7 @@ Five discovery cells were classed ice-sheet interior on 2024-06-15 and confirmed
 
 ## How to rerun
 
-On the original build machine, `python --version` reported **Python 3.13.9**. Install the packages named in [`requirements.txt`](requirements.txt): `pandas`, `numpy`, `h5py`, `pyhdf`, `rasterio`, and `folium`. That file does not pin versions.
+On the original build machine, `python --version` reported **Python 3.13.9**. Install the packages named in [`requirements.txt`](requirements.txt): `pandas`, `numpy`, `h5py`, `pyhdf`, `rasterio`, `folium`, and `earthaccess`. That file does not pin versions.
 
 The coarse rasters are not in git. `.gitignore` ignores `*.hdf`, `*.h5`, `*.hdf5`, `*.he5`, and `*.tif`. Filenames, versions, and URLs for the three June 2024 granules are in [`notes/data-log.md`](notes/data-log.md):
 
@@ -57,23 +57,32 @@ python src/export_map_data.py
 
 ### Multi-year rerun
 
+The downloader uses NASA Earthdata Login through `earthaccess`. Configure authorized credentials locally with an `EARTHDATA_TOKEN`, the `EARTHDATA_USERNAME` and `EARTHDATA_PASSWORD` environment variables, or a Windows `_netrc` file; never paste credentials into chat or commit them. To create a local `_netrc` interactively, run this in a VS Code terminal:
+
+```
+python -c "import earthaccess; earthaccess.login(strategy='interactive', persist=True)"
+```
+
+The credentials stay in your user profile, outside the repository. Protect that file. The monthly downloader preflights the full period through CMR, downloads the granules, and verifies their filenames, HDF signatures, and sizes.
+
 The monthly builder accepts a year and month, resolves the matching MOD13C2, MOD11C3, and IMERG granules in `data/raw/`, and writes a compressed table under `data/processed/monthly/YYYY-MM/`. For example:
 
 ```
 python src/build_features.py --year 2024 --month 6
 ```
 
-Preflight and build all 120 monthly tables for 2015–2024, then run:
+Download and build the 60 monthly tables for 2019–2023, then run:
 
 ```
-python src/build_monthly_range.py --start-year 2015 --end-year 2024
-python src/build_climatology.py --start-year 2015 --end-year 2024
-python src/score_climatology.py --start-year 2015 --end-year 2024
+python src/download_monthly_range.py --start-year 2019 --end-year 2023
+python src/build_monthly_range.py --start-year 2019 --end-year 2023
+python src/build_climatology.py --start-year 2019 --end-year 2023
+python src/score_climatology.py --start-year 2019 --end-year 2023
 ```
 
-The climatology builder requires at least 10 valid months per cell-year and at least 8 valid years per cell by default. A monthly cell value is accepted only with at least 8/16 valid MODIS pixels or 2/4 valid IMERG pixels. It checks every input table, its sidecar manifest and checksums, and coordinate grid, preserving missing values. Monthly manifests record SHA-256 hashes for the processed table and three source granules; the climatology manifest carries those hashes forward. Quality flags are explicitly recorded as unfiltered. The output contains day-weighted annual means, interannual standard deviations, seasonal monthly extremes, and spatial/time coverage counts. The separate climatology score uses the annual NDVI and precipitation rate plus the average coldest-month night temperature; it recomputes scales from that decade and remains a heuristic, not a success probability. Its outputs go under `results/climatology/` and cannot overwrite the published June results.
+The climatology builder requires at least 10 valid months per cell-year and, for five years, at least 4 valid years per cell by default. A monthly cell value is accepted only with at least 8/16 valid MODIS pixels or 2/4 valid IMERG pixels. It checks every input table, its sidecar manifest and checksums, and coordinate grid, preserving missing values. Monthly manifests record SHA-256 hashes for the processed table and three source granules; the climatology manifest carries those hashes forward. Quality flags are explicitly recorded as unfiltered. The output contains day-weighted annual means, interannual standard deviations, seasonal monthly extremes, and spatial/time coverage counts. The separate multi-year score uses the period-mean NDVI and precipitation rate plus the average coldest-month night temperature; it recomputes scales from that period and remains a heuristic, not a success probability. Its outputs go under `results/climatology/2019-2023/` and cannot overwrite the published June results.
 
-The 2015–2024 run currently stops before aggregation: 119 of 120 monthly feature tables are absent. The only local monthly granules are June 2024. See [`notes/data-log.md`](notes/data-log.md); no decade ranking is available yet.
+The 2019–2023 raw files and monthly tables are not yet present locally. The only local monthly granules are June 2024. See [`notes/data-log.md`](notes/data-log.md); no multi-year ranking is available yet.
 
 `src/export_map_data.py` is the map rebuild named in [`notes/map.md`](notes/map.md). It rewrites `web/index.html`.
 

@@ -128,7 +128,9 @@ def test_range_builder_preflights_every_month_before_processing(
         build_monthly_range.main()
 
 
-def test_decade_aggregation_is_weighted_by_days_and_keeps_temporal_spread(tmp_path: Path):
+def test_multi_year_aggregation_is_weighted_by_days_and_keeps_temporal_spread(
+    tmp_path: Path,
+):
     write_synthetic_months(tmp_path, range(2023, 2025))
 
     frame, manifest = build_climatology(
@@ -149,7 +151,7 @@ def test_decade_aggregation_is_weighted_by_days_and_keeps_temporal_spread(tmp_pa
             )
             / sum(days)
         )
-    assert frame.loc[0, "ndvi_annual_mean_10y"] == pytest.approx(
+    assert frame.loc[0, "ndvi_multi_year_mean"] == pytest.approx(
         sum(annual_ndvi_means) / 2
     )
     assert frame.loc[0, "ndvi_interannual_sd"] == pytest.approx(
@@ -162,13 +164,27 @@ def test_decade_aggregation_is_weighted_by_days_and_keeps_temporal_spread(tmp_pa
     assert frame.loc[0, "ndvi_years_covered"] == 2
     assert frame.loc[0, "ndvi_mean_valid_months_per_year"] == pytest.approx(12)
     assert frame.loc[0, "ndvi_mean_valid_pixels_per_month"] == pytest.approx(16)
-    assert pd.isna(frame.loc[1, "ndvi_annual_mean_10y"])
+    assert pd.isna(frame.loc[1, "ndvi_multi_year_mean"])
     assert frame.loc[1, "ndvi_years_covered"] == 0
     assert manifest["input_count"] == 24
     assert all(len(entry["sha256"]) == 64 for entry in manifest["inputs"])
 
 
-def test_decade_aggregation_rejects_misaligned_monthly_grids(tmp_path: Path):
+def test_five_year_period_uses_four_year_default_coverage_and_neutral_labels(
+    tmp_path: Path,
+):
+    write_synthetic_months(tmp_path, range(2019, 2024))
+
+    frame, manifest = build_climatology(2019, 2023, monthly_root=tmp_path)
+
+    assert manifest["minimum_valid_months_per_year"] == 10
+    assert manifest["minimum_years_required_per_cell"] == 4
+    assert manifest["method_version"] == "annualized-grid-v2"
+    assert "ndvi_multi_year_mean" in frame
+    assert "ndvi_annual_mean_10y" not in frame
+
+
+def test_multi_year_aggregation_rejects_misaligned_monthly_grids(tmp_path: Path):
     write_synthetic_months(tmp_path, range(2023, 2024))
     february = input_path(2023, 2, tmp_path)
     table = pd.read_csv(february)
@@ -182,12 +198,12 @@ def test_decade_aggregation_rejects_misaligned_monthly_grids(tmp_path: Path):
         build_climatology(2023, 2023, min_months_per_year=10, monthly_root=tmp_path)
 
 
-def test_decade_aggregation_fails_when_any_month_is_missing(tmp_path: Path):
+def test_multi_year_aggregation_fails_when_any_month_is_missing(tmp_path: Path):
     with pytest.raises(FileNotFoundError, match="Missing 12 of 12 monthly feature tables"):
         build_climatology(2023, 2023, monthly_root=tmp_path)
 
 
-def test_decade_aggregation_rejects_a_monthly_table_that_changed_after_manifest(
+def test_multi_year_aggregation_rejects_a_monthly_table_that_changed_after_manifest(
     tmp_path: Path,
 ):
     write_synthetic_months(tmp_path, range(2023, 2024))
@@ -200,7 +216,7 @@ def test_decade_aggregation_rejects_a_monthly_table_that_changed_after_manifest(
         build_climatology(2023, 2023, min_months_per_year=10, monthly_root=tmp_path)
 
 
-def test_decade_aggregation_discards_months_below_half_cell_pixel_support(
+def test_multi_year_aggregation_discards_months_below_half_cell_pixel_support(
     tmp_path: Path,
 ):
     write_synthetic_months(tmp_path, range(2023, 2024))
@@ -227,7 +243,7 @@ def test_decade_aggregation_discards_months_below_half_cell_pixel_support(
         for month in range(1, 13)
         if month != 2
     ) / sum(days)
-    assert frame.loc[0, "ndvi_annual_mean_10y"] == pytest.approx(expected)
+    assert frame.loc[0, "ndvi_multi_year_mean"] == pytest.approx(expected)
     assert frame.loc[0, "ndvi_mean_valid_pixels_per_month"] == pytest.approx(16)
     assert manifest["minimum_valid_pixels_per_month"]["ndvi_median"]["minimum"] == 8
 
@@ -237,8 +253,8 @@ def test_climatology_scoring_uses_coldest_month_proxy_and_fails_closed_on_missin
         {
             "lat_center_deg": [0.0, 1.0, 2.0],
             "lon_center_deg": [0.0, 1.0, 2.0],
-            "ndvi_annual_mean_10y": [0.0, 0.1, np.nan],
-            "precip_annual_mean_rate_mm_hr_10y": [0.0, 0.01, 0.02],
+            "ndvi_multi_year_mean": [0.0, 0.1, np.nan],
+            "precip_multi_year_mean_rate_mm_hr": [0.0, 0.01, 0.02],
             "lst_night_coldest_month_mean_k": [190.0, 200.0, 210.0],
             "ndvi_interannual_sd": [0.01, 0.02, np.nan],
         }
@@ -270,7 +286,7 @@ def test_climatology_scoring_uses_coldest_month_proxy_and_fails_closed_on_missin
 def test_climatology_scoring_writes_separate_hash_checked_outputs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
-    period = "2015-2024"
+    period = "2019-2023"
     data_root = tmp_path / "climatology"
     data_dir = data_root / period
     data_dir.mkdir(parents=True)
@@ -278,25 +294,25 @@ def test_climatology_scoring_writes_separate_hash_checked_outputs(
         {
             "lat_center_deg": [0.0, 35.0, -25.0, 10.0],
             "lon_center_deg": [0.0, 80.0, -70.0, 30.0],
-            "ndvi_annual_mean_10y": [0.0, 0.1, 0.2, 0.05],
+            "ndvi_multi_year_mean": [0.0, 0.1, 0.2, 0.05],
             "ndvi_interannual_sd": [0.01, 0.02, 0.03, 0.01],
             "ndvi_typical_monthly_min": [-0.1, 0.0, 0.1, 0.0],
             "ndvi_typical_monthly_max": [0.2, 0.3, 0.4, 0.2],
-            "ndvi_years_covered": [10, 10, 10, 10],
+            "ndvi_years_covered": [5, 5, 5, 5],
             "ndvi_mean_valid_months_per_year": [12, 12, 12, 12],
             "ndvi_mean_valid_pixels_per_month": [16, 16, 16, 16],
-            "precip_annual_mean_rate_mm_hr_10y": [0.0, 0.01, 0.02, 0.03],
+            "precip_multi_year_mean_rate_mm_hr": [0.0, 0.01, 0.02, 0.03],
             "precip_interannual_sd_mm_hr": [0.001, 0.002, 0.003, 0.004],
             "precip_typical_monthly_min_rate_mm_hr": [0.0, 0.0, 0.01, 0.01],
             "precip_typical_monthly_max_rate_mm_hr": [0.01, 0.02, 0.03, 0.04],
-            "precip_years_covered": [10, 10, 10, 10],
+            "precip_years_covered": [5, 5, 5, 5],
             "precip_mean_valid_months_per_year": [12, 12, 12, 12],
             "precip_mean_valid_pixels_per_month": [4, 4, 4, 4],
-            "lst_night_annual_mean_k_10y": [230.0, 240.0, 250.0, 260.0],
+            "lst_night_multi_year_mean_k": [230.0, 240.0, 250.0, 260.0],
             "lst_night_interannual_sd_k": [1.0, 2.0, 3.0, 4.0],
             "lst_night_coldest_month_mean_k": [190.0, 200.0, 210.0, 220.0],
             "lst_night_warmest_month_mean_k": [240.0, 250.0, 260.0, 270.0],
-            "lst_night_years_covered": [10, 10, 10, 10],
+            "lst_night_years_covered": [5, 5, 5, 5],
             "lst_night_mean_valid_months_per_year": [12, 12, 12, 12],
             "lst_night_mean_valid_pixels_per_month": [16, 16, 16, 16],
         }
@@ -306,11 +322,11 @@ def test_climatology_scoring_writes_separate_hash_checked_outputs(
     (data_dir / "manifest.json").write_text(
         json.dumps(
             {
-                "period": {"start_year": 2015, "end_year": 2024},
-                "input_count": 120,
-                "method_version": "annualized-grid-v1",
+                "period": {"start_year": 2019, "end_year": 2023},
+                "input_count": 60,
+                "method_version": "annualized-grid-v2",
                 "minimum_valid_months_per_year": 10,
-                "minimum_years_required_per_cell": 8,
+                "minimum_years_required_per_cell": 4,
                 "minimum_valid_pixels_per_month": {
                     "ndvi_median": {"minimum": 8, "maximum": 16},
                     "precip_median_mm_hr": {"minimum": 2, "maximum": 4},
@@ -344,7 +360,7 @@ def test_climatology_scoring_writes_separate_hash_checked_outputs(
     monkeypatch.setattr(score_module, "WEIGHTS_JSON", weights_path)
     monkeypatch.setattr(
         "sys.argv",
-        ["score_climatology.py", "--start-year", "2015", "--end-year", "2024"],
+        ["score_climatology.py", "--start-year", "2019", "--end-year", "2023"],
     )
 
     climatology_scorer.main()
@@ -354,6 +370,6 @@ def test_climatology_scoring_writes_separate_hash_checked_outputs(
     assert (output_dir / "top5.csv").is_file()
     assert (output_dir / "control.csv").is_file()
     summary = json.loads((output_dir / "run.json").read_text(encoding="utf-8"))
-    assert summary["monthly_tables"] == 120
+    assert summary["monthly_tables"] == 60
     assert summary["discovery_cells_after_exclusions"] == 3
     assert summary["best_control"]["lat_center_deg"] == -25.0

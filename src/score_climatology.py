@@ -23,8 +23,8 @@ RESULTS_ROOT = ROOT / "results"
 
 CLIMATOLOGY_COLUMNS = {
     "slope_median_deg": None,
-    "ndvi_median": "ndvi_annual_mean_10y",
-    "precip_median_mm_hr": "precip_annual_mean_rate_mm_hr_10y",
+    "ndvi_median": "ndvi_multi_year_mean",
+    "precip_median_mm_hr": "precip_multi_year_mean_rate_mm_hr",
     "lst_night_median_k": "lst_night_coldest_month_mean_k",
 }
 VARIABILITY_COLUMNS = {
@@ -158,7 +158,7 @@ def main() -> None:
         parser.error(f"{manifest_path} does not describe the requested period.")
     if manifest.get("input_count") != (args.end_year - args.start_year + 1) * 12:
         parser.error(f"{manifest_path} does not record one complete monthly table per month.")
-    if manifest.get("method_version") != "annualized-grid-v1":
+    if manifest.get("method_version") != "annualized-grid-v2":
         parser.error(f"{manifest_path} was produced by an unsupported aggregation method.")
     expected_pixel_thresholds = {
         feature: {
