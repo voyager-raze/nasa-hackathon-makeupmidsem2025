@@ -1,8 +1,8 @@
-"""Embed the land-cell table in web/index.html and build the judge-facing map.
+"""Build the judge-facing map and its compressed land-cell data asset.
 
 Reads data/processed/features.csv, notes/weights.json, notes/targets.md,
 notes/features.md, and results/sites.json. Uses the same distance rules as
-src/score.py. Writes web/index.html only. Does not rank by editing
+src/score.py. Writes web/index.html and web/features.bin.gz. Does not rank by editing
 results/top5.csv, and does not fill a blank measurement.
 
 The page is Leaflet plus the OpenFreeMap Positron and dark styles. It does not load Folium,
@@ -14,7 +14,6 @@ measurement table, the default weights, or the locked targets change.
 
 from __future__ import annotations
 
-import base64
 import gzip
 import hashlib
 import html
@@ -37,7 +36,6 @@ STABILITY_JSON = ROOT / "results" / "weight-stability.json"
 OUT_HTML = ROOT / "web" / "index.html"
 
 NULL_I32 = np.int32(-2147483648)
-RECORD_BYTES = 32
 MEASURED_PACK = (
     "ndvi_median",
     "precip_median_mm_hr",
@@ -161,12 +159,42 @@ def pack_micro(series: pd.Series) -> np.ndarray:
         return out
     scaled = np.rint(series.to_numpy(dtype=np.float64)[mask] * 1_000_000)
     if np.any(scaled <= np.iinfo(np.int32).min) or np.any(scaled > np.iinfo(np.int32).max):
-        stop([f"A measured value in {series.name} does not fit the embedded table."])
+        stop([f"A measured value in {series.name} does not fit the feature table."])
     out[mask] = scaled.astype("<i4")
     back = out[mask].astype(np.float64) / 1_000_000
     if not np.array_equal(back, series.to_numpy(dtype=np.float64)[mask]):
         stop([f"Embedding {series.name} changed a measured value. The page was not written."])
     return out
+
+
+def delta_tenths(values: np.ndarray, name: str) -> np.ndarray:
+    delta = np.empty(len(values), dtype="<i2")
+    if not len(values):
+        return delta
+    delta[0] = values[0]
+    differences = np.diff(values.astype(np.int32))
+    if np.any(differences < np.iinfo(np.int16).min) or np.any(
+        differences > np.iinfo(np.int16).max
+    ):
+        stop([f"Adjacent {name} coordinates do not fit a 16-bit delta."])
+    delta[1:] = differences.astype("<i2")
+    return delta
+
+
+def delta_micro(values: np.ndarray, name: str) -> np.ndarray:
+    delta = values.copy()
+    if len(values) < 2:
+        return delta
+    previous = values[:-1].astype(np.int64)
+    current = values[1:].astype(np.int64)
+    adjacent_valid = (values[:-1] != NULL_I32) & (values[1:] != NULL_I32)
+    differences = current[adjacent_valid] - previous[adjacent_valid]
+    if np.any(differences <= np.iinfo(np.int32).min) or np.any(
+        differences > np.iinfo(np.int32).max
+    ):
+        stop([f"Adjacent {name} values do not fit a 32-bit delta."])
+    delta[1:][adjacent_valid] = differences.astype("<i4")
+    return delta
 
 
 def pack_tenths(series: pd.Series) -> np.ndarray:
@@ -417,9 +445,9 @@ def page_html(
 <title>Mission Analog Readiness</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 {STYLE}
 </head>
 <body>
@@ -431,7 +459,7 @@ def page_html(
       <p class="pm-quiet">Site-specific mission probability is not supported by these Earth analog features.</p>
       <p class="pm-quiet">June 2024 snapshot · 0/3 scored features have direct Moon or Mars referents · low evidence grade</p>
       <p class="pm-quiet">MOD11 quality flags were not additional filters.</p>
-      <p id="pm-check">Reading the embedded table.</p>
+      <p id="pm-check">Loading the feature table.</p>
     </div>
     <nav class="pm-links" aria-label="Evidence and method">
       <a href="../results/RESULTS.html">Dossiers</a>
@@ -457,7 +485,7 @@ def page_html(
   <aside class="pm-side">
     <section id="pm-selected" class="pm-card">
       <h2>Selected cell</h2>
-      <p id="pm-cell-id" class="pm-id">Reading the embedded table.</p>
+      <p id="pm-cell-id" class="pm-id">Loading the feature table.</p>
       <p id="pm-cell-coord" class="pm-coord"></p>
       <p id="pm-cell-role"></p>
       <p class="pm-scoreline"><span id="pm-live-score" class="pm-score">—</span> <span id="pm-score-kind">June three-feature score</span></p>
@@ -512,7 +540,7 @@ def page_html(
     </div>
     <section class="pm-card">
       <h2>Discovery</h2>
-      <p id="pm-status" class="pm-hint">Reading the embedded table.</p>
+      <p id="pm-status" class="pm-hint">Loading the feature table.</p>
       <ol id="pm-ranks" class="pm-ranks"></ol>
       {stability_line}
     </section>
@@ -771,7 +799,6 @@ STYLE = """
 SCRIPT = r"""
 <script>
 const META = __META__;
-const B64 = "__B64__";
 const NULL_I32 = -2147483648;
 const LIGHT = "https://tiles.openfreemap.org/styles/positron";
 const DARK = "https://tiles.openfreemap.org/styles/dark";
@@ -789,17 +816,6 @@ function hexFloat(hex) {
   const bytes = new Uint8Array(8);
   for (let i = 0; i < 8; i += 1) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
   return new DataView(bytes.buffer).getFloat64(0, true);
-}
-
-function b64ToBytes(b64) {
-  const clean = b64.replace(/\s+/g, "");
-  const out = new Uint8Array(Math.floor(clean.length * 3 / 4));
-  let at = 0;
-  for (let i = 0; i < clean.length; i += 4096) {
-    const bin = atob(clean.slice(i, i + 4096));
-    for (let j = 0; j < bin.length; j += 1) out[at++] = bin.charCodeAt(j);
-  }
-  return out.subarray(0, at);
 }
 
 function esc(value) {
@@ -1240,7 +1256,7 @@ function scheduleRank() {
 function ensureMap() {
   if (map || typeof L === "undefined") return;
   if (typeof maplibregl === "undefined" || typeof MaplibreGLLeaflet === "undefined") {
-    document.getElementById("pm-check").textContent = "The basemap libraries did not load. The scores below still use the embedded table.";
+    document.getElementById("pm-check").textContent = "The basemap libraries did not load. The scores below still use the feature table.";
     return;
   }
   positron = MaplibreGLLeaflet.maplibreGL({ style: LIGHT, attribution: ATTRIB });
@@ -1423,19 +1439,25 @@ function setupTour() {
 async function start() {
   ensureMap();
   if (typeof L === "undefined") {
-    document.getElementById("pm-check").textContent = "The basemap library did not load. The scores below still use the embedded table.";
+    document.getElementById("pm-check").textContent = "The basemap library did not load. The scores below still use the feature table.";
   }
-  const gzipBytes = b64ToBytes(B64);
   if (typeof DecompressionStream === "undefined") {
-    throw new Error("This browser cannot read the embedded table.");
+    throw new Error("This browser cannot decompress the feature table.");
   }
-  const stream = new Blob([gzipBytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  const response = await fetch(new URL("features.bin.gz", document.baseURI));
+  if (!response.ok) {
+    throw new Error("Feature table request failed with HTTP " + response.status + ".");
+  }
+  const stream = response.body.pipeThrough(new DecompressionStream("gzip"));
   const raw = new Uint8Array(await new Response(stream).arrayBuffer());
-  if (raw.byteLength !== META.n * 32) {
-    throw new Error("Embedded table length " + raw.byteLength + " does not match " + META.n + " cells.");
+  if (raw.byteLength !== META.n * 29) {
+    throw new Error("Feature table length " + raw.byteLength + " does not match " + META.n + " cells.");
   }
   const view = new DataView(raw.buffer, raw.byteOffset, raw.byteLength);
   n = META.n;
+  const coordinateBytes = n * 2;
+  const measurementStart = coordinateBytes * 2;
+  const coverageStart = measurementStart + n * 20;
   lats = new Int16Array(n);
   lons = new Int16Array(n);
   micros = {
@@ -1458,20 +1480,46 @@ async function start() {
     lst_night_median_k: new Float64Array(n)
   };
   hold = new Uint8Array(n);
+  const measurementKeys = [
+    "ndvi_median",
+    "precip_median_mm_hr",
+    "lst_night_median_k",
+    "lst_day_median_k",
+    "lst_day_night_range_median_k"
+  ];
+  const coverageKeys = [
+    "ndvi_median",
+    "precip_median_mm_hr",
+    "lst_night_median_k",
+    "lst_day_median_k",
+    "lst_day_night_range_median_k"
+  ];
+  const previous = {
+    ndvi_median: NULL_I32,
+    precip_median_mm_hr: NULL_I32,
+    lst_night_median_k: NULL_I32,
+    lst_day_median_k: NULL_I32,
+    lst_day_night_range_median_k: NULL_I32
+  };
+  let previousLat = 0;
+  let previousLon = 0;
   for (let i = 0; i < n; i += 1) {
-    const offset = i * 32;
-    lats[i] = view.getInt16(offset, true);
-    lons[i] = view.getInt16(offset + 2, true);
-    micros.ndvi_median[i] = view.getInt32(offset + 4, true);
-    micros.precip_median_mm_hr[i] = view.getInt32(offset + 8, true);
-    micros.lst_night_median_k[i] = view.getInt32(offset + 12, true);
-    micros.lst_day_median_k[i] = view.getInt32(offset + 16, true);
-    micros.lst_day_night_range_median_k[i] = view.getInt32(offset + 20, true);
-    coverage.ndvi_median[i] = view.getUint8(offset + 24);
-    coverage.precip_median_mm_hr[i] = view.getUint8(offset + 25);
-    coverage.lst_night_median_k[i] = view.getUint8(offset + 26);
-    coverage.lst_day_median_k[i] = view.getUint8(offset + 27);
-    coverage.lst_day_night_range_median_k[i] = view.getUint8(offset + 28);
+    previousLat += view.getInt16(i * 2, true);
+    previousLon += view.getInt16(coordinateBytes + i * 2, true);
+    lats[i] = previousLat;
+    lons[i] = previousLon;
+    for (let j = 0; j < measurementKeys.length; j += 1) {
+      const key = measurementKeys[j];
+      const delta = view.getInt32(measurementStart + j * n * 4 + i * 4, true);
+      const micro = delta === NULL_I32
+        ? NULL_I32
+        : previous[key] === NULL_I32 ? delta : previous[key] + delta;
+      previous[key] = micro;
+      micros[key][i] = micro;
+    }
+    for (let j = 0; j < coverageKeys.length; j += 1) {
+      coverage[coverageKeys[j]][i] = view.getUint8(coverageStart + j * n + i);
+    }
     ["ndvi_median", "precip_median_mm_hr", "lst_night_median_k"].forEach((key) => {
       const micro = micros[key][i];
       norms[key][i] = micro === NULL_I32 ? NaN : rawDistance(key, micro / 1000000) / SCALES[key];
@@ -1487,11 +1535,13 @@ async function start() {
   if (map) map.invalidateSize();
 }
 
-start().catch((error) => {
-  const note = document.getElementById("pm-check");
-  note.className = "pm-check is-bad";
-  note.textContent = "The embedded table did not load. " + error.message;
-});
+document.addEventListener("DOMContentLoaded", () => {
+  start().catch((error) => {
+    const note = document.getElementById("pm-check");
+    note.className = "pm-check is-bad";
+    note.textContent = "The feature table did not load. " + error.message;
+  });
+}, { once: true });
 </script>
 """
 
@@ -1563,48 +1613,21 @@ def main() -> None:
         pack_coverage(frame[column], maximum)
         for _feature, column, maximum in COVERAGE_PACK
     ]
-    record = np.empty(
-        len(frame),
-        dtype=np.dtype(
-            [
-                ("lat", "<i2"),
-                ("lon", "<i2"),
-                ("ndvi", "<i4"),
-                ("precip", "<i4"),
-                ("lst_night", "<i4"),
-                ("lst_day", "<i4"),
-                ("lst_day_night_range", "<i4"),
-                ("ndvi_count", "u1"),
-                ("precip_count", "u1"),
-                ("lst_night_count", "u1"),
-                ("lst_day_count", "u1"),
-                ("lst_day_night_range_count", "u1"),
-                ("reserved", "u1", (3,)),
-            ],
-            align=False,
+    columns = [
+        delta_tenths(lat_i, "latitude").tobytes(),
+        delta_tenths(lon_i, "longitude").tobytes(),
+        *(
+            delta_micro(values, name).tobytes()
+            for name, values in zip(MEASURED_PACK, packed_cols, strict=True)
         ),
-    )
-    if record.dtype.itemsize != RECORD_BYTES:
-        stop([f"Embedded record size is {record.dtype.itemsize}, not {RECORD_BYTES}."])
-    record["lat"] = lat_i
-    record["lon"] = lon_i
-    record["ndvi"] = packed_cols[0]
-    record["precip"] = packed_cols[1]
-    record["lst_night"] = packed_cols[2]
-    record["lst_day"] = packed_cols[3]
-    record["lst_day_night_range"] = packed_cols[4]
-    for field, values in zip(
-        ("ndvi_count", "precip_count", "lst_night_count", "lst_day_count", "lst_day_night_range_count"),
-        packed_coverage,
-        strict=True,
-    ):
-        record[field] = values
-    record["reserved"] = 0
-    raw = record.tobytes()
+        *(values.tobytes() for values in packed_coverage),
+    ]
+    raw = b"".join(columns)
+    if len(raw) != len(frame) * 29:
+        stop(["The compressed feature table has an invalid packed length."])
     compressed = gzip.compress(raw, compresslevel=9, mtime=0)
     if gzip.decompress(compressed) != raw:
-        stop(["The embedded table did not round-trip through compression."])
-    b64 = base64.b64encode(compressed).decode("ascii")
+        stop(["The feature table did not round-trip through compression."])
 
     expected_top = []
     for _, row in top.iterrows():
@@ -1681,8 +1704,8 @@ def main() -> None:
             stop([f"{key} cell {meta[key]['cell_id']} is not one row of the measurement table."])
 
     page = page_html(bodies, sites, weights, all_null, stability)
-    script = SCRIPT.replace("__META__", json.dumps(meta, ensure_ascii=False)).replace("__B64__", b64)
-    if "__B64__" in script or "__META__" in script:
+    script = SCRIPT.replace("__META__", json.dumps(meta, ensure_ascii=False))
+    if "__META__" in script:
         stop(["A page placeholder was left unfilled."])
     page = page + script + "\n</body>\n</html>\n"
     banned = ("bootstrap", "jquery", "font-awesome", "fontawesome", "glyphicon", "awesome-markers", "user-scalable")
@@ -1696,6 +1719,7 @@ def main() -> None:
         stop(["Generated page still inverts the basemap."])
 
     OUT_HTML.parent.mkdir(exist_ok=True)
+    (OUT_HTML.parent / "features.bin.gz").write_bytes(compressed)
     OUT_HTML.write_text(page, encoding="utf-8", newline="\n")
 
     ice = scored["lat_center_deg"].between(ICE_SHEET["lat_min"], ICE_SHEET["lat_max"]) & scored[
@@ -1707,7 +1731,8 @@ def main() -> None:
         kind="mergesort",
     )
     print(f"Wrote {OUT_HTML}")
-    print(f"Embedded cells: {len(frame)}")
+    print(f"Wrote {OUT_HTML.parent / 'features.bin.gz'}")
+    print(f"Feature cells: {len(frame)}")
     print(f"HTML bytes: {OUT_HTML.stat().st_size}")
     print("Batch discovery, including the rejected ice-sheet cells:")
     for row in expected_top:

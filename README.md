@@ -94,7 +94,7 @@ The climatology builder requires at least 10 valid months per cell-year and, for
 
 The 2019–2023 raw files and monthly tables are not yet present locally. The only local monthly granules are June 2024. See [notes/data-log.md](notes/data-log.md); no multi-year ranking is available yet.
 
-`src/export_map_data.py` is the map rebuild named in [notes/map.md](notes/map.md). It rewrites [`web/index.html`](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html) ([local file](web/index.html)).
+`src/export_map_data.py` is the map rebuild named in [notes/map.md](notes/map.md). It rewrites [`web/index.html`](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html) ([local file](web/index.html)) and its adjacent compressed feature table, `web/features.bin.gz`. Keep both files together when publishing the dashboard, and serve `web/` over HTTP rather than opening the HTML directly.
 
 The two patch slopes and elevations come from Copernicus DEM GLO-30 Public tiles that are also outside git. Their URLs are on the `slope_median_deg` and `elevation_median` rows in `results/sources.csv`. The local files used were `data/raw/cop30_N35.3_E81.1.tif` and `data/raw/cop30_S27.9_W68.9.tif`. With those tiles present, `python src/local_slope.py` rewrites those rows. The LOLA Site01 slope tile is not in the repository. It was read on 14 November 2026 and the band was copied into `notes/targets.md` and `results/sources.csv`.
 

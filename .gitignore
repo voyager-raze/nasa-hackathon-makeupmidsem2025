@@ -24,6 +24,7 @@ docs/meta-prompt-session-chain.md
 *.tar.gz
 *.tgz
 *.gz
+!web/features.bin.gz
 
 # Earthdata and other credentials. Do not commit these.
 .netrc

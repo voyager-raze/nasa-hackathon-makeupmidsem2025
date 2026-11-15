@@ -33,11 +33,11 @@
       "rank1_top5_fraction": 0.04
     }
   ],
-  "features_sha256": "2528e191df0a9d015a0e5f59234d2dcf0420e0fd77755bfcfaeeb17e747a1876",
+  "features_sha256": "265985d91c8f33d7e5dc1ff47374d313d684028401ce08549510045d5cb9b331",
   "weights_sha256": "6e9c5f0f8b6081c27cb334c70578652ad684e5bf31b90b3e6a74161181e5b313",
-  "targets_sha256": "084e281017e11dd28379daee9ffa82ed0b5a0b77b55604a0b3af7ad30d734f0a",
-  "exclusion_source_sha256": "38d2c327233b0e90736b0e669d2a78e1fb7d3dbb5a91beb99cf9c95e508ac19f",
-  "method_sha256": "d46ca825820b1a5c5038e033cb5d20429cf45aeb4552ebfea0e0ecf53809b80c",
+  "targets_sha256": "b6565f9f6564253dda0cc8ee0c760c2e72253431b14afa06e4e6ee44d2694f56",
+  "exclusion_source_sha256": "83b721d2e4318964a6fe416ed9a0c8bb3ae579a048e2a0f40466bd787b5c9668",
+  "method_sha256": "327186fe0a9b5261b98d44d4a8de97e354548084fae24263dac7e3a35e359172",
   "ranking_exclusions": {
     "atacama_holdout": {
       "lat_min": -30.0,
