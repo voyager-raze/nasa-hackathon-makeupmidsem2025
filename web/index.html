@@ -196,6 +196,7 @@
     .pm-app { grid-template-columns: minmax(0, .72fr) minmax(600px, 1.28fr); }
     .pm-hud { gap: 5px; }
     .pm-hud .pm-btn { padding: 6px 8px; font-size: 11px; }
+    .pm-links { flex-wrap: wrap; justify-content: flex-end; max-width: 200px; gap: 3px 9px; }
   }
   @media (max-width: 980px) {
     .pm-banner { padding: 10px 12px; }
@@ -243,6 +244,7 @@
       <a href="../results/score-notes.html">Method</a>
       <a href="../notes/data-log.html">Data log</a>
       <a href="../notes/credibility.html">Validation</a>
+      <a href="../notes/qc-robustness.html">QC Robustness</a>
     </nav>
     <button type="button" id="pm-guide" class="pm-btn">90-sec review</button>
   </header>
@@ -926,7 +928,7 @@ function setupTour() {
     { sel: ".pm-stats", title: "Start with the finding", body: "Among these two sites, Vinchina has the lower three-proxy score (0.167981 vs 0.186845) and its later-measured 9.48° median slope is inside the lunar 8.0–16.7° band. Kunlun's 7.08° slope is below it. Consider Vinchina for a terrain-only mobility study, subject to access and safety checks—not as a validated analog." },
     { sel: "#pm-selected", title: "Check the evidence", body: "Only NDVI, precipitation, and night surface temperature were scored. They are one-month Earth proxies; none has a direct Moon or Mars referent in the source table. Pixel counts show support, not confidence in mission success." },
     { sel: ".pm-moon", title: "Find the limits", body: "Slope is a later patch measurement, not part of either published score. Bramson et al. (2015) provide radar evidence for ground ice at the Mars target, but we used no Earth ice/permafrost layer, so no Earth ice analog is identified. Earth cannot reproduce lunar or Martian gravity, atmosphere, radiation, or a permanently shadowed lunar thermal environment." },
-    { sel: ".pm-links", title: "Trace the claims", body: "Open Dossiers for the full site comparison, Method for the formula, Data log for inputs, and Validation for what has—and has not—been checked." },
+    { sel: ".pm-links", title: "Trace the claims", body: "Open Dossiers for the full site comparison, Method for the formula, Data log for inputs, Validation for what has—and has not—been checked, and QC Robustness for data quality checks." },
     { sel: "#pm-ranks", title: "Explore if needed", body: "The project pairs a global screen with an Atacama-region hold-out comparator, a separate lunar-slope check, and a testable mobility-study proposal. The distance formula is conventional. Use the map to navigate evidence; changing weights does not validate a candidate." }
   ];
   const root = document.getElementById("pm-tour");
