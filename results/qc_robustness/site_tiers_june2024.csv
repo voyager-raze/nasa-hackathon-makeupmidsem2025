@@ -1,0 +1,13 @@
+tier,kind,site,n_pixels,n_kept,n_lost_vs_t0,median_k,delta_vs_t0_k,min_k,max_k,description
+T0,primary,Kunlun,16,16,0,258.8,0.0,255.14,264.02,valid LST only (the project's existing rule; QC not used)
+T1,primary,Kunlun,16,16,0,258.8,0.0,255.14,264.02,"T0 + mandatory QA in {0, 1} (an LST was actually produced)"
+T2,primary,Kunlun,16,16,0,258.8,0.0,255.14,264.02,T1 + estimated LST error category <= 1 (at most 2 K)
+T4,primary,Kunlun,16,2,14,262.68,3.88,261.34,264.02,T1 + estimated LST error category == 0 (at most 1 K)
+T5,primary,Kunlun,16,10,6,256.81,-1.99,255.14,261.68,T1 + L1B data-quality bit 2 == 0 (good input data)
+X1,exploratory,Kunlun,16,16,0,258.8,0.0,255.14,264.02,T2 + emissivity-consistency category != 3 (drops only the 'out of +/-1.3 std' class; the specification gives no pass/fail threshold)
+T0,primary,Vinchina,16,16,0,254.45,0.0,252.74,256.2,valid LST only (the project's existing rule; QC not used)
+T1,primary,Vinchina,16,16,0,254.45,0.0,252.74,256.2,"T0 + mandatory QA in {0, 1} (an LST was actually produced)"
+T2,primary,Vinchina,16,16,0,254.45,0.0,252.74,256.2,T1 + estimated LST error category <= 1 (at most 2 K)
+T4,primary,Vinchina,16,15,1,254.52,0.07,252.74,256.2,T1 + estimated LST error category == 0 (at most 1 K)
+T5,primary,Vinchina,16,0,16,,,,,T1 + L1B data-quality bit 2 == 0 (good input data)
+X1,exploratory,Vinchina,16,16,0,254.45,0.0,252.74,256.2,T2 + emissivity-consistency category != 3 (drops only the 'out of +/-1.3 std' class; the specification gives no pass/fail threshold)
