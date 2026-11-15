@@ -72,6 +72,15 @@ REJECTED_ICE = (
     "73.5_-40.9",
     "74.1_-39.9",
 )
+EXTRA_SITES = (
+    {"cell_id": "36.1_78.3", "lat": 36.1, "lon": 78.3, "name": "Western Kunlun (Aksai Chin, positive-NDVI check)", "color": "#0f8a62"},
+    {"cell_id": "35.7_77.3", "lat": 35.7, "lon": 77.3, "name": "Western Kunlun West (Karakoram margin, positive-NDVI check)", "color": "#0f8a62"},
+    {"cell_id": "-28.1_-69.1", "lat": -28.1, "lon": -69.1, "name": "Southern Puna border (adjacent to Vinchina)", "color": "#c47a12"},
+    {"cell_id": "-22.5_-67.7", "lat": -22.5, "lon": -67.7, "name": "Sur Lípez, Bolivia (Laguna Colorada, 0 mm/hr rain check)", "color": "#c47a12"},
+    {"cell_id": "-20.5_-67.5", "lat": -20.5, "lon": -67.5, "name": "Nor/Sur Lípez, Bolivia (Uyuni margin, 0 mm/hr rain check)", "color": "#c47a12"},
+    {"cell_id": "71.9_-89.5", "lat": 71.9, "lon": -89.5, "name": "Brodeur Peninsula, Baffin Island (Arctic bare-rock check)", "color": "#1d6fdb"},
+    {"cell_id": "-22.3_-68.9", "lat": -22.3, "lon": -68.9, "name": "Calama basin, Chile (Atacama central depression core)", "color": "#c47a12"},
+)
 ICE_SHEET = {
     "lat_min": 70.5,
     "lat_max": 78.9,
@@ -439,6 +448,8 @@ def page_html(
       <button type="button" id="pm-go-rank" class="pm-btn">Rank 1</button>
       <button type="button" id="pm-go-a" class="pm-btn">Site A</button>
       <button type="button" id="pm-go-b" class="pm-btn">Site B</button>
+      <button type="button" id="pm-go-wkunlun" class="pm-btn">W. Kunlun</button>
+      <button type="button" id="pm-go-lipez" class="pm-btn">Sur Lípez</button>
       <button type="button" id="pm-go-box" class="pm-btn">Hold-out</button>
       <button type="button" id="pm-basemap" class="pm-btn" aria-pressed="false">Dark map</button>
     </div>
@@ -1040,6 +1051,8 @@ function renderDetail(i) {
   if (hold[i]) role = "Inside the Atacama hold-out.";
   if (id === META.site_a.cell_id) role = "Site A. " + META.site_a.name + ".";
   if (id === META.site_b.cell_id) role = "Site B. " + META.site_b.name + ". Atacama hold-out control.";
+  const extraHit = (META.extra_sites || []).find((s) => s.cell_id === id);
+  if (extraHit) role = extraHit.name + ".";
   roleEl.textContent = role;
   const present = ["ndvi_median", "precip_median_mm_hr", "lst_night_median_k"].filter((key) => earthValue(key, i) !== null).length;
   confidenceEl.innerHTML = "Evidence grade: <strong>LOW</strong> · " + present + "/3 Earth proxy measures present · 0/3 direct planetary referents";
@@ -1096,6 +1109,13 @@ function drawMarkers() {
     const score = eligible[siteB] ? fmtScore(scores[siteB]) : "not ranked";
     addCircle(siteB, "#c47a12", "Site B \u00b7 " + META.site_b.name + " \u00b7 " + score);
   }
+  (META.extra_sites || []).forEach((s) => {
+    const idx = findCell(s.lat, s.lon);
+    if (idx >= 0 && !markerByIndex.has(idx)) {
+      const score = eligible[idx] ? fmtScore(scores[idx]) : "not ranked";
+      addCircle(idx, s.color, s.name + " \u00b7 " + s.cell_id + " \u00b7 " + score);
+    }
+  });
 }
 
 function renderList(weights) {
@@ -1281,6 +1301,10 @@ function bindChrome() {
   document.getElementById("pm-go-rank").addEventListener("click", () => { if (visibleDiscovery.length) select(visibleDiscovery[0]); });
   document.getElementById("pm-go-a").addEventListener("click", () => select(siteA()));
   document.getElementById("pm-go-b").addEventListener("click", () => select(siteB()));
+  const goWK = document.getElementById("pm-go-wkunlun");
+  if (goWK) goWK.addEventListener("click", () => select(findCell(36.1, 78.3)));
+  const goLP = document.getElementById("pm-go-lipez");
+  if (goLP) goLP.addEventListener("click", () => select(findCell(-22.5, -67.7)));
   document.getElementById("pm-jump-a").addEventListener("click", () => select(siteA()));
   document.getElementById("pm-jump-b").addEventListener("click", () => select(siteB()));
   document.getElementById("pm-go-box").addEventListener("click", () => {
@@ -1609,6 +1633,7 @@ def main() -> None:
         },
         "ice_sheet": ICE_SHEET,
         "rejected": list(REJECTED_ICE),
+        "extra_sites": list(EXTRA_SITES),
         "features": [
             {
                 "key": spec["key"],
