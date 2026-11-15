@@ -8,7 +8,15 @@ This is a heuristic screening index: the three scored Earth features have no dir
 
 A separate multi-year path supports monthly inputs, period-neutral annualized features, seasonal extremes, and interannual variability. It does **not** replace the published June baseline. The selected extension is five complete years, 2019–2023. CMR metadata lists all 180 required granules (about 10.91 GiB), but the authenticated files have not yet been downloaded, so no multi-year score or ranking is available.
 
-The page a judge opens is [`web/index.html`](web/index.html). It keeps the map and selection details in the existing no-page-scroll desktop layout. Double-click the file, or open it from the repository root on GitHub Pages.
+**Live Interactive Dashboard:** [**https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html**](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html)
+
+The page a judge opens is the live dashboard at [`https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html`](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html) (source file: [web/index.html](web/index.html)). It keeps the interactive world map, all candidate and hold-out pins, and selection details in a single-screen, no-scroll desktop layout. You can also open the companion pages directly on GitHub Pages:
+- **Live Interactive Map (`web/index.html`):** [https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html)
+- **Live 7-Slide Deck (`results/slides.html`):** [https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/slides.html](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/slides.html)
+- **Live Site Dossiers (`results/RESULTS.html`):** [https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/RESULTS.html](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/RESULTS.html)
+- **Live Scoring Method (`results/score-notes.html`):** [https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/score-notes.html](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/score-notes.html)
+- **Live Data Log (`notes/data-log.html`):** [https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/notes/data-log.html](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/notes/data-log.html)
+- **Live Validation Notes (`notes/credibility.html`):** [https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/notes/credibility.html](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/notes/credibility.html)
 
 | Place | Site |
 | --- | --- |
@@ -19,7 +27,7 @@ The page a judge opens is [`web/index.html`](web/index.html). It keeps the map a
 
 Site B at 0.167981 is closer on the three June 2024 Earth proxies than Site A at 0.186845. Both scores used `ndvi_median`, `precip_median_mm_hr`, and `lst_night_median_k`; `slope_median_deg` was null in both. The later, separate slope check also places Vinchina (9.48°) inside the Moon's 8.0–16.7° band, while Kunlun (7.08°) is below it. Among these two, study Vinchina first for terrain-only mobility and keep Kunlun as a lower-slope comparison. Neither is a validated analog.
 
-**What matches.** Only quantities with a row in [`results/sources.csv`](results/sources.csv).
+**What matches.** Only quantities with a row in [results/sources.csv](results/sources.csv).
 
 Kunlun, June 2024, on a 0.2° by 0.2° cell: vegetation index −0.01995 NDVI, precipitation 0.006 mm/hr, night land-surface temperature 258.8 kelvin. Vinchina, same month and cell size: vegetation index 0.00925 NDVI, precipitation 0.008 mm/hr, night land-surface temperature 254.45 kelvin. Both vegetation indexes sit near zero, and both precipitation rates sit near the dry end of the logged unit. No Moon or Mars value for vegetation, precipitation, or night temperature is in the source table, so each Earth number stands alone.
 
@@ -37,13 +45,13 @@ Night temperature stands alone at 258.8 kelvin at Kunlun and 254.45 kelvin at Vi
 
 Five discovery cells were classed ice-sheet interior on 2024-06-15 and confirmed on 2024-08-15, and were not kept: 73.5°N, 40.5°W; 73.5°N, 40.7°W; 73.9°N, 40.1°W; 73.5°N, 40.9°W; and 74.1°N, 39.9°W.
 
-Because `35.3_81.1` has a slightly negative June NDVI (−0.01995, bare ground with ridgeline snow), a secondary check on the same `src/score.py` distance table inspected nearby positive-NDVI cells in Western Kunlun and additional zero-precipitation cells inside the Atacama-region hold-out box. All of these pins are plotted on [`web/index.html`](web/index.html) and logged in [`results/sources.csv`](results/sources.csv): Western Kunlun `36.1_78.3` (NDVI 0.0108, rain 0.0035 mm/hr, night LST 262.67 K, score 0.195322) and `35.7_77.3` (NDVI 0.00815, rain 0.001 mm/hr, night LST 266.1 K, score 0.204707); the cell immediately southwest of Vinchina at `-28.1_-69.1` (NDVI 0.0056, rain 0.009 mm/hr, night LST 259.65 K, score 0.187750); Sur Lípez in southern Bolivia at `-22.5_-67.7` (NDVI 0.04965, rain 0 mm/hr, night LST 263.77 K, score 0.211229) and `-20.5_-67.5` (NDVI 0.01595, rain 0 mm/hr, night LST 271.44 K, score 0.227362); Brodeur Peninsula on Baffin Island at `71.9_-89.5` (NDVI 0.00745, rain 0.0025 mm/hr, night LST 268.96 K, score 0.217175); and the warmer, lower-elevation Chilean Atacama core at `-22.3_-68.9` (NDVI 0.038, rain 0 mm/hr, night LST 277.14 K, score 0.258254).
+Because `35.3_81.1` has a slightly negative June NDVI (−0.01995, bare ground with ridgeline snow), a secondary check on the same `src/score.py` distance table inspected nearby positive-NDVI cells in Western Kunlun and additional zero-precipitation cells inside the Atacama-region hold-out box. All of these pins are plotted on the live dashboard at [`web/index.html`](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html) ([local file](web/index.html)) and logged in [results/sources.csv](results/sources.csv): Western Kunlun `36.1_78.3` (NDVI 0.0108, rain 0.0035 mm/hr, night LST 262.67 K, score 0.195322) and `35.7_77.3` (NDVI 0.00815, rain 0.001 mm/hr, night LST 266.1 K, score 0.204707); the cell immediately southwest of Vinchina at `-28.1_-69.1` (NDVI 0.0056, rain 0.009 mm/hr, night LST 259.65 K, score 0.187750); Sur Lípez in southern Bolivia at `-22.5_-67.7` (NDVI 0.04965, rain 0 mm/hr, night LST 263.77 K, score 0.211229) and `-20.5_-67.5` (NDVI 0.01595, rain 0 mm/hr, night LST 271.44 K, score 0.227362); Brodeur Peninsula on Baffin Island at `71.9_-89.5` (NDVI 0.00745, rain 0.0025 mm/hr, night LST 268.96 K, score 0.217175); and the warmer, lower-elevation Chilean Atacama core at `-22.3_-68.9` (NDVI 0.038, rain 0 mm/hr, night LST 277.14 K, score 0.258254).
 
 ## How to rerun
 
 On the original build machine, `python --version` reported **Python 3.13.9**. Install the packages named in [`requirements.txt`](requirements.txt): `pandas`, `numpy`, `h5py`, `pyhdf`, `rasterio`, `folium`, and `earthaccess`. That file does not pin versions.
 
-The coarse rasters are not in git. `.gitignore` ignores `*.hdf`, `*.h5`, `*.hdf5`, `*.he5`, and `*.tif`. Filenames, versions, and URLs for the three June 2024 granules are in [`notes/data-log.md`](notes/data-log.md):
+The coarse rasters are not in git. `.gitignore` ignores `*.hdf`, `*.h5`, `*.hdf5`, `*.he5`, and `*.tif`. Filenames, versions, and URLs for the three June 2024 granules are in [notes/data-log.md](notes/data-log.md):
 
 - `data/raw/MOD13C2.A2024153.061.2024198104950.hdf`
 - `data/raw/MOD11C3.A2024153.061.2024187024328.hdf`
@@ -84,32 +92,34 @@ python src/score_climatology.py --start-year 2019 --end-year 2023
 
 The climatology builder requires at least 10 valid months per cell-year and, for five years, at least 4 valid years per cell by default. A monthly cell value is accepted only with at least 8/16 valid MODIS pixels or 2/4 valid IMERG pixels. It checks every input table, its sidecar manifest and checksums, and coordinate grid, preserving missing values. Monthly manifests record SHA-256 hashes for the processed table and three source granules; the climatology manifest carries those hashes forward. Quality flags are explicitly recorded as unfiltered. The output contains day-weighted annual means, interannual standard deviations, seasonal monthly extremes, and spatial/time coverage counts. The separate multi-year score uses the period-mean NDVI and precipitation rate plus the average coldest-month night temperature; it recomputes scales from that period and remains a heuristic, not a success probability. Its outputs go under `results/climatology/2019-2023/` and cannot overwrite the published June results.
 
-The 2019–2023 raw files and monthly tables are not yet present locally. The only local monthly granules are June 2024. See [`notes/data-log.md`](notes/data-log.md); no multi-year ranking is available yet.
+The 2019–2023 raw files and monthly tables are not yet present locally. The only local monthly granules are June 2024. See [notes/data-log.md](notes/data-log.md); no multi-year ranking is available yet.
 
-`src/export_map_data.py` is the map rebuild named in [`notes/map.md`](notes/map.md). It rewrites `web/index.html`.
+`src/export_map_data.py` is the map rebuild named in [notes/map.md](notes/map.md). It rewrites [`web/index.html`](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html) ([local file](web/index.html)).
 
 The two patch slopes and elevations come from Copernicus DEM GLO-30 Public tiles that are also outside git. Their URLs are on the `slope_median_deg` and `elevation_median` rows in `results/sources.csv`. The local files used were `data/raw/cop30_N35.3_E81.1.tif` and `data/raw/cop30_S27.9_W68.9.tif`. With those tiles present, `python src/local_slope.py` rewrites those rows. The LOLA Site01 slope tile is not in the repository. It was read on 14 November 2026 and the band was copied into `notes/targets.md` and `results/sources.csv`.
 
 ## Limits and nulls
 
-Each Earth cell in the screen is 0.2° by 0.2°, the patch size on the Earth rows in `results/sources.csv`. [`notes/features.md`](notes/features.md) records that cell as 22.3 km north–south, and east–west as 22.3 km times the cosine of latitude: about 22.3 km at the equator and about 11.1 km at 60° latitude. The table holds 577134 land cells. June 2024 is one month. It is summer in the north and winter in the south. It is not a climate normal.
+Each Earth cell in the screen is 0.2° by 0.2°, the patch size on the Earth rows in `results/sources.csv`. [notes/features.md](notes/features.md) records that cell as 22.3 km north–south, and east–west as 22.3 km times the cosine of latitude: about 22.3 km at the equator and about 11.1 km at 60° latitude. The table holds 577134 land cells. June 2024 is one month. It is summer in the north and winter in the south. It is not a climate normal.
 
 Earth cannot copy gravity, vacuum, thin carbon-dioxide air, or radiation. Those limits are stated above.
 
-`slope_median_deg` and `slope_valid_count` are blank on every land cell in the feature grid, so the published scores left slope out. The 7.08 degree and 9.48 degree figures are later measurements of the two patches only. A blank vegetation, night-temperature, or precipitation value means the layer did not cover that cell. Every land cell south of 60°S has a blank NDVI in this June table. Minerals, an ice-map raster, and a dust index for Badger are blank in [`notes/targets.md`](notes/targets.md). No ice or permafrost map was opened. A null feature is part of the result.
+`slope_median_deg` and `slope_valid_count` are blank on every land cell in the feature grid, so the published scores left slope out. The 7.08 degree and 9.48 degree figures are later measurements of the two patches only. A blank vegetation, night-temperature, or precipitation value means the layer did not cover that cell. Every land cell south of 60°S has a blank NDVI in this June table. Minerals, an ice-map raster, and a dust index for Badger are blank in [notes/targets.md](notes/targets.md). No ice or permafrost map was opened. A null feature is part of the result.
 
 ## Credibility pack
 
 The score is a partial match on measured features, not a probability of mission success. A lower score is a closer partial match.
 
-- [`notes/credibility.md`](notes/credibility.md) — pedigree, verification, validation, and uncertainty
-- [`notes/factor-coverage.md`](notes/factor-coverage.md) — which traits are measured, missing, or limits
-- [`notes/sensitivity.md`](notes/sensitivity.md) — what the Site A and Site B order does when a weight is set to 0
+- [notes/credibility.md](notes/credibility.md) — pedigree, verification, validation, and uncertainty
+- [notes/factor-coverage.md](notes/factor-coverage.md) — which traits are measured, missing, or limits
+- [notes/sensitivity.md](notes/sensitivity.md) — what the Site A and Site B order does when a weight is set to 0
 
 The page is an analog screen for a rover rehearsal on measured ground. Vacuum, radiation, and suit or landing-engine tests stay in a lab.
 
 ## Read next
 
-- [`results/RESULTS.md`](results/RESULTS.md) — the two dossiers
-- [`results/sources.csv`](results/sources.csv) — every measured number
-- [`notes/data-log.md`](notes/data-log.md) — granule names, versions, and URLs
+- [`web/index.html` (Live Dashboard)](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/web/index.html) — interactive global map and comparison pins
+- [results/RESULTS.md](results/RESULTS.md) ([Live HTML](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/RESULTS.html)) — the two dossiers
+- [results/slides.html (Live 7-Slide Deck)](https://voyager-raze.github.io/nasa-hackathon-makeupmidsem2025/results/slides.html) — browser presentation
+- [results/sources.csv](results/sources.csv) — every measured number
+- [notes/data-log.md](notes/data-log.md) — granule names, versions, and URLs
